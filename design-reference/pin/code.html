@@ -1,0 +1,130 @@
+<html lang="th"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"on-error-container":"#93000a","on-tertiary-fixed-variant":"#7b2f00","secondary-fixed":"#e1e0ff","inverse-primary":"#c3c0ff","inverse-on-surface":"#f3effc","on-secondary-container":"#fffbff","tertiary":"#7e3000","on-surface-variant":"#464555","outline-variant":"#c7c4d8","surface-dark":"#1E293B","on-primary-fixed":"#0f0069","on-tertiary":"#ffffff","tertiary-container":"#a44100","surface-container-lowest":"#ffffff","bg-light":"#F8FAFC","error":"#ba1a1a","on-secondary":"#ffffff","surface-container-low":"#f5f2ff","secondary":"#4648d4","on-secondary-fixed":"#07006c","inverse-surface":"#302f39","on-primary":"#ffffff","primary-fixed":"#e2dfff","secondary-fixed-dim":"#c0c1ff","on-secondary-fixed-variant":"#2f2ebe","on-background":"#1b1b24","surface-container":"#f0ecf9","bg-dark":"#0F172A","status-success":"#10B981","primary":"#3525cd","status-warning":"#F59E0B","surface-bright":"#fcf8ff","on-primary-container":"#dad7ff","tertiary-fixed-dim":"#ffb695","on-tertiary-fixed":"#351000","primary-container":"#4f46e5","on-tertiary-container":"#ffd2be","background":"#fcf8ff","surface-container-high":"#eae6f4","text-dark-mode":"#E2E8F0","on-primary-fixed-variant":"#3323cc","primary-fixed-dim":"#c3c0ff","outline":"#777587","on-surface":"#1b1b24","surface-tint":"#4d44e3","surface":"#fcf8ff","status-error":"#EF4444","surface-dim":"#dcd8e5","error-container":"#ffdad6","surface-container-highest":"#e4e1ee","on-error":"#ffffff","secondary-container":"#6063ee","tertiary-fixed":"#ffdbcc","surface-variant":"#e4e1ee","status-inactive":"#94A3B8"}}}}</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-surface flex items-center justify-center min-h-screen p-margin-mobile"><main class="w-full max-w-md"><div class="flex flex-col w-full h-full items-center justify-center p-4 relative overflow-hidden" id="pin-modal-container">
+<div class="absolute inset-0 bg-surface-dark/40 backdrop-blur-md z-0" id="modal-backdrop"></div>
+<div class="relative z-10 w-full max-w-sm bg-surface-container-lowest rounded-[24px] shadow-2xl flex flex-col p-8 opacity-0 scale-95 transition-all duration-300 ease-out" id="pin-modal">
+<div class="flex justify-center mb-6 relative">
+<div class="absolute inset-0 bg-error/20 blur-xl rounded-full scale-150"></div>
+<div class="w-16 h-16 bg-error-container rounded-full flex items-center justify-center relative z-10 text-on-error-container shadow-sm border-[0.5px] border-error/10">
+<span class="material-symbols-outlined text-3xl font-light">lock</span>
+</div>
+</div>
+<div class="text-center mb-6 space-y-2">
+<h2 class="font-headline-md text-headline-md text-on-surface">ยืนยันตัวตนด้วย PIN</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">กรุณากรอกรหัส PIN 6 หลักของคุณ</p>
+</div>
+<div class="bg-error-container/50 rounded-xl p-4 flex items-start gap-3 mb-8">
+<span class="material-symbols-outlined text-error mt-0.5 text-xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-error-container mb-1">การดำเนินการสำคัญ</p>
+<p class="font-metadata text-metadata text-on-error-container/80 leading-relaxed">คุณกำลังทำการลบบัญชีผู้ดูแลระบบ การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+</div>
+</div>
+<div class="flex justify-between gap-2 mb-10" id="pin-inputs-container">
+<input class="w-12 h-14 bg-surface-container rounded-lg text-center font-headline-lg text-headline-lg text-on-surface focus:outline-none focus:bg-inverse-on-surface focus:ring-2 focus:ring-error transition-all pin-input" inputmode="numeric" maxlength="1" type="password"/>
+<input class="w-12 h-14 bg-surface-container rounded-lg text-center font-headline-lg text-headline-lg text-on-surface focus:outline-none focus:bg-inverse-on-surface focus:ring-2 focus:ring-error transition-all pin-input" inputmode="numeric" maxlength="1" type="password"/>
+<input class="w-12 h-14 bg-surface-container rounded-lg text-center font-headline-lg text-headline-lg text-on-surface focus:outline-none focus:bg-inverse-on-surface focus:ring-2 focus:ring-error transition-all pin-input" inputmode="numeric" maxlength="1" type="password"/>
+<input class="w-12 h-14 bg-surface-container rounded-lg text-center font-headline-lg text-headline-lg text-on-surface focus:outline-none focus:bg-inverse-on-surface focus:ring-2 focus:ring-error transition-all pin-input" inputmode="numeric" maxlength="1" type="password"/>
+<input class="w-12 h-14 bg-surface-container rounded-lg text-center font-headline-lg text-headline-lg text-on-surface focus:outline-none focus:bg-inverse-on-surface focus:ring-2 focus:ring-error transition-all pin-input" inputmode="numeric" maxlength="1" type="password"/>
+<input class="w-12 h-14 bg-surface-container rounded-lg text-center font-headline-lg text-headline-lg text-on-surface focus:outline-none focus:bg-inverse-on-surface focus:ring-2 focus:ring-error transition-all pin-input" inputmode="numeric" maxlength="1" type="password"/>
+</div>
+<div class="flex gap-4 mt-auto">
+<button class="flex-1 py-3.5 px-4 rounded-full bg-surface-container hover:bg-surface-container-high active:scale-[0.97] transition-all font-label-md text-label-md text-on-surface-variant flex items-center justify-center gap-2" id="cancel-btn" type="button">
+                ยกเลิก
+            </button>
+<button class="flex-1 py-3.5 px-4 rounded-full bg-error hover:bg-error/90 active:scale-[0.97] transition-all font-label-md text-label-md text-on-error flex items-center justify-center gap-2 shadow-lg shadow-error/20" id="confirm-btn" type="button">
+<span class="material-symbols-outlined text-xl">check_circle</span>
+                ยืนยัน
+            </button>
+</div>
+<div class="absolute inset-0 bg-status-success rounded-[24px] flex flex-col items-center justify-center text-on-error opacity-0 pointer-events-none scale-110 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-20" id="success-overlay">
+<span class="material-symbols-outlined text-6xl mb-4" style="font-variation-settings: 'FILL' 1;">task_alt</span>
+<p class="font-headline-md text-headline-md">ยืนยันสำเร็จ</p>
+</div>
+</div>
+</div>
+<style>
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-4px); }
+        40%, 80% { transform: translateX(4px); }
+    }
+    .shake-anim {
+        animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+    
+    .pin-input::-webkit-outer-spin-button,
+    .pin-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('pin-modal');
+        const inputs = document.querySelectorAll('.pin-input');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const inputsContainer = document.getElementById('pin-inputs-container');
+        const successOverlay = document.getElementById('success-overlay');
+
+        // Modal entrance animation
+        setTimeout(() => {
+            modal.classList.remove('opacity-0', 'scale-95');
+            modal.classList.add('opacity-100', 'scale-100');
+            inputs[0].focus();
+        }, 50);
+
+        // Auto-advance inputs
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1) {
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value) {
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Simulate Validation
+        confirmBtn.addEventListener('click', () => {
+            const pin = Array.from(inputs).map(i => i.value).join('');
+            
+            if (pin === '123456') { // Mock success condition
+                // Success animation
+                successOverlay.classList.remove('opacity-0', 'pointer-events-none', 'scale-110');
+                successOverlay.classList.add('opacity-100', 'scale-100');
+                
+                // Scale down slightly to emphasize the completion
+                modal.style.transform = 'scale(0.98)';
+                
+            } else {
+                // Error animation
+                inputsContainer.classList.add('shake-anim');
+                inputs.forEach(input => {
+                    input.classList.add('ring-2', 'ring-error', 'text-error', 'bg-error-container/20');
+                });
+                
+                // Reset animation class so it can play again
+                setTimeout(() => {
+                    inputsContainer.classList.remove('shake-anim');
+                }, 400);
+                
+                // Clear inputs after brief delay
+                setTimeout(() => {
+                    inputs.forEach(input => {
+                        input.value = '';
+                        input.classList.remove('ring-2', 'ring-error', 'text-error', 'bg-error-container/20');
+                    });
+                    inputs[0].focus();
+                }, 800);
+            }
+        });
+    });
+</script></main></body></html>

@@ -1,0 +1,387 @@
+<?php
+
+namespace App\Services;
+
+/**
+ * evaluation_templates/criteria/evaluations/evaluation_scores (AI_AGENT_PHASES.md Phase 7
+ * items 3-5). Signing happens inline inside submit() (see docblock there) rather than as a
+ * separate POST /signatures call — this project's forms are plain multipart POSTs, not JS
+ * fetch(), so the signature pad's base64 PNG just rides along in the same submission.
+ */
+final class EvaluationService
+{
+    private SupabaseClient $client;
+    private SettingsService $settings;
+    private SignatureService $signatures;
+
+    public function __construct(?SupabaseClient $client = null)
+    {
+        $this->client = $client ?? new SupabaseClient();
+        $this->settings = new SettingsService($this->client);
+        $this->signatures = new SignatureService($this->client);
+    }
+
+    /**
+     * RULE-EVAL-03 — must hold true whenever an admin creates/edits a template's criteria.
+     * Building the actual admin UI for this is AI_AGENT_PHASES.md Phase 8 scope ("หน้าจัดการ
+     * evaluation_templates/evaluation_criteria"), not Phase 7 — this method exists now so that
+     * future UI has a single, already-tested place to call, and so TC-EVAL-001 can be verified
+     * today without duplicating Phase 8's work building a full CRUD screen early.
+     *
+     * @param float[] $criteriaMaxScores
+     */
+    public static function validateCriteriaSum(float $templateMaxScore, array $criteriaMaxScores): void
+    {
+        $sum = array_sum($criteriaMaxScores);
+        if (abs($sum - $templateMaxScore) > 0.001) {
+            throw new AuthException(
+                'VALIDATION_ERROR',
+                "ผลรวมคะแนนหัวข้อย่อย ({$sum}) ต้องเท่ากับคะแนนเต็มของแบบประเมิน ({$templateMaxScore})",
+                ['sum' => $sum, 'expected' => $templateMaxScore]
+            );
+        }
+    }
+
+    /**
+     * Admin console (Phase 8 item 5) — the evaluator_type enum only has 3 fixed values
+     * (company_weekly/company_final/teacher_final, DATABASE.md §0.2), so this is "edit the
+     * existing 3 templates' criteria" rather than free-form template CRUD; there's no way to
+     * add a 4th template type without a schema migration, so that's not offered here.
+     */
+    public function listAllTemplatesWithCriteria(): array
+    {
+        $templates = $this->client->restGet('evaluation_templates', 'select=id,name,evaluator_type,max_score&order=id.asc');
+        foreach ($templates as &$t) {
+            $t['criteria'] = $this->client->restGet('evaluation_criteria', 'template_id=eq.' . $t['id'] . '&select=id,criteria_name,max_score&order=sort_order.asc');
+        }
+        return $templates;
+    }
+
+    public function getTemplateWithCriteriaById(int $templateId): ?array
+    {
+        $rows = $this->client->restGet('evaluation_templates', 'id=eq.' . $templateId . '&select=id,name,evaluator_type,max_score');
+        if (!isset($rows[0])) {
+            return null;
+        }
+        $rows[0]['criteria'] = $this->client->restGet('evaluation_criteria', 'template_id=eq.' . $templateId . '&select=id,criteria_name,max_score&order=sort_order.asc');
+        return $rows[0];
+    }
+
+    /**
+     * RULE-EVAL-03 enforced here via validateCriteriaSum() before anything is written.
+     * @param array<int, array{name:string,max_score:float}> $criteriaUpdates keyed by criteria_id
+     */
+    public function updateTemplateCriteria(int $templateId, float $newTemplateMax, array $criteriaUpdates): void
+    {
+        self::validateCriteriaSum($newTemplateMax, array_column($criteriaUpdates, 'max_score'));
+
+        foreach ($criteriaUpdates as $criteriaId => $c) {
+            $name = trim($c['name']);
+            if ($name === '') {
+                throw new AuthException('VALIDATION_ERROR', 'ชื่อหัวข้อประเมินต้องไม่ว่างเปล่า');
+            }
+            $this->client->restUpdate('evaluation_criteria', 'id=eq.' . $criteriaId, [
+                'criteria_name' => $name,
+                'max_score' => $c['max_score'],
+            ]);
+        }
+        $this->client->restUpdate('evaluation_templates', 'id=eq.' . $templateId, ['max_score' => $newTemplateMax]);
+    }
+
+    /** @return array{id:int,max_score:float,criteria:array<int,array{id:int,criteria_name:string,max_score:float}>}|null */
+    public function getTemplateByType(string $evaluatorType): ?array
+    {
+        $templates = $this->client->restGet(
+            'evaluation_templates',
+            'evaluator_type=eq.' . $evaluatorType . '&is_active=eq.true&select=id,max_score&limit=1'
+        );
+        if (!isset($templates[0])) {
+            return null;
+        }
+        $criteria = $this->client->restGet(
+            'evaluation_criteria',
+            'template_id=eq.' . $templates[0]['id'] . '&select=id,criteria_name,max_score&order=sort_order.asc'
+        );
+        return ['id' => (int) $templates[0]['id'], 'max_score' => (float) $templates[0]['max_score'], 'criteria' => $criteria];
+    }
+
+    /** @return array<int, array{internship_id:int,student_name:string,next_week:?int}> */
+    public function listEligibleForCompanyWeekly(int $companyId): array
+    {
+        return $this->listEligible('company_id=eq.' . $companyId, 'company_weekly', true);
+    }
+
+    public function listEligibleForCompanyFinal(int $companyId): array
+    {
+        return $this->listEligible('company_id=eq.' . $companyId, 'company_final', false);
+    }
+
+    public function listEligibleForTeacherFinal(int $teacherId): array
+    {
+        return $this->listEligible('teacher_id=eq.' . $teacherId, 'teacher_final', false);
+    }
+
+    private function listEligible(string $internshipFilter, string $evaluatorType, bool $isWeekly): array
+    {
+        $internships = $this->client->restGet('internships', $internshipFilter . '&status=in.(active,completed)&deleted_at=is.null&select=id,student_id');
+        $template = $this->getTemplateByType($evaluatorType);
+        $out = [];
+        foreach ($internships as $i) {
+            $student = $this->client->restGet('students', 'id=eq.' . $i['student_id'] . '&select=first_name,last_name');
+            $studentName = isset($student[0]) ? trim($student[0]['first_name'] . ' ' . $student[0]['last_name']) : '-';
+            $nextWeek = null;
+            $alreadyDone = false;
+            if ($template !== null) {
+                $existing = $this->client->restGet(
+                    'evaluations',
+                    'internship_id=eq.' . $i['id'] . '&template_id=eq.' . $template['id'] . '&select=week_number,status'
+                );
+                if ($isWeekly) {
+                    $submittedWeeks = array_filter($existing, static fn (array $e) => $e['status'] === 'submitted');
+                    $nextWeek = count($submittedWeeks) + 1;
+                } else {
+                    $alreadyDone = !empty(array_filter($existing, static fn (array $e) => $e['status'] === 'submitted'));
+                }
+            }
+            $out[] = ['internship_id' => (int) $i['id'], 'student_name' => $studentName, 'next_week' => $nextWeek, 'already_done' => $alreadyDone];
+        }
+        return $out;
+    }
+
+    /** @return array{student_name:string,template:array,week_number:?int}|null */
+    public function getFormContext(int $internshipId, string $evaluatorType): ?array
+    {
+        $internships = $this->client->restGet('internships', 'id=eq.' . $internshipId . '&select=student_id');
+        if (!isset($internships[0])) {
+            return null;
+        }
+        $template = $this->getTemplateByType($evaluatorType);
+        if ($template === null) {
+            return null;
+        }
+        $student = $this->client->restGet('students', 'id=eq.' . $internships[0]['student_id'] . '&select=first_name,last_name');
+
+        $weekNumber = null;
+        if ($evaluatorType === 'company_weekly') {
+            $existing = $this->client->restGet(
+                'evaluations',
+                'internship_id=eq.' . $internshipId . '&template_id=eq.' . $template['id'] . '&status=eq.submitted&select=week_number'
+            );
+            $weekNumber = count($existing) + 1;
+        }
+
+        return [
+            'student_name' => isset($student[0]) ? trim($student[0]['first_name'] . ' ' . $student[0]['last_name']) : '-',
+            'template' => $template,
+            'week_number' => $weekNumber,
+        ];
+    }
+
+    /**
+     * RULE-EVAL-03 (checked again here as a submission-time boundary, not just at template
+     * authoring time), RULE-EVAL-04 (signature required), RULE-EVAL-05 (locked once submitted —
+     * enforced by refusing to touch a row whose status is already 'submitted').
+     *
+     * Flow (LEAVE_EVALUATION_SIGNATURE.md §2.4 adapted for a single form POST instead of two
+     * separate API calls): 1) upsert the evaluations row as a scored-but-unsigned draft so a
+     * real id exists, 2) create the signature pointing at that real id (resolves the
+     * signature/evaluation polymorphic chicken-and-egg — signing an id that doesn't exist yet
+     * isn't possible), 3) attach signature_id and flip status=submitted.
+     */
+    public function submit(
+        int $internshipId,
+        string $evaluatorType,
+        ?int $weekNumber,
+        array $scores,
+        string $overallComment,
+        string $signatureBase64,
+        string $evaluatorUserId,
+        string $ip,
+        string $userAgent
+    ): array {
+        $template = $this->getTemplateByType($evaluatorType);
+        if ($template === null) {
+            throw new AuthException('VALIDATION_ERROR', 'ไม่พบแบบประเมินนี้');
+        }
+        if (trim($signatureBase64) === '') {
+            throw new AuthException('SIGNATURE_REQUIRED', 'กรุณาลงลายเซ็นก่อนส่งแบบประเมิน');
+        }
+
+        $existing = $this->findEvaluation($internshipId, $template['id'], $weekNumber);
+        if ($existing !== null && $existing['status'] === 'submitted') {
+            throw new AuthException('VALIDATION_ERROR', 'มีการประเมินนี้ถูกส่งไปแล้ว ไม่สามารถส่งซ้ำได้ (RULE-EVAL-05)');
+        }
+
+        $criteriaById = [];
+        foreach ($template['criteria'] as $c) {
+            $criteriaById[$c['id']] = $c;
+        }
+        $total = 0.0;
+        $scoreRows = [];
+        foreach ($scores as $criteriaId => $score) {
+            $criteriaId = (int) $criteriaId;
+            if (!isset($criteriaById[$criteriaId])) {
+                throw new AuthException('VALIDATION_ERROR', 'หัวข้อประเมินไม่ถูกต้อง');
+            }
+            $score = (float) $score;
+            if ($score < 0 || $score > (float) $criteriaById[$criteriaId]['max_score']) {
+                throw new AuthException('VALIDATION_ERROR', 'คะแนน "' . $criteriaById[$criteriaId]['criteria_name'] . '" เกินคะแนนเต็ม (' . $criteriaById[$criteriaId]['max_score'] . ')');
+            }
+            $total += $score;
+            $scoreRows[] = ['criteria_id' => $criteriaId, 'score' => $score];
+        }
+        if ($total > $template['max_score'] + 0.001) {
+            throw new AuthException('VALIDATION_ERROR', 'ผลรวมคะแนนเกินคะแนนเต็มของแบบประเมิน (' . $template['max_score'] . ')');
+        }
+
+        $payload = [
+            'internship_id' => $internshipId,
+            'template_id' => $template['id'],
+            'evaluator_user_id' => $evaluatorUserId,
+            'week_number' => $weekNumber,
+            'evaluation_date' => date('Y-m-d'),
+            'total_score' => round($total, 2),
+            'overall_comment' => trim($overallComment) ?: null,
+        ];
+        try {
+            $evalRows = $existing !== null
+                ? $this->client->restUpdate('evaluations', 'id=eq.' . $existing['id'], $payload)
+                : $this->client->restInsert('evaluations', $payload);
+        } catch (SupabaseException $e) {
+            throw new AuthException('VALIDATION_ERROR', 'บันทึกแบบประเมินไม่สำเร็จ', ['cause' => $e->getMessage()]);
+        }
+        $evaluationId = (int) $evalRows[0]['id'];
+
+        $fullScoreRows = array_map(
+            static fn (array $s) => ['evaluation_id' => $evaluationId, 'criteria_id' => $s['criteria_id'], 'score' => $s['score']],
+            $scoreRows
+        );
+        $this->client->restInsert('evaluation_scores', $fullScoreRows, 'evaluation_id,criteria_id');
+
+        $signature = $this->signatures->create($evaluatorUserId, 'evaluation', $evaluationId, $signatureBase64, $ip, $userAgent);
+
+        $this->client->restUpdate('evaluations', 'id=eq.' . $evaluationId, [
+            'signature_id' => $signature['id'],
+            'status' => 'submitted',
+            'submitted_at' => date('c'),
+        ]);
+
+        if ($weekNumber === null) {
+            $this->maybeComputeCombinedGrade($internshipId);
+        }
+
+        return ['evaluation_id' => $evaluationId, 'total_score' => round($total, 2)];
+    }
+
+    private function findEvaluation(int $internshipId, int $templateId, ?int $weekNumber): ?array
+    {
+        $query = 'internship_id=eq.' . $internshipId . '&template_id=eq.' . $templateId
+            . '&week_number=' . ($weekNumber === null ? 'is.null' : 'eq.' . $weekNumber)
+            . '&select=id,status';
+        $rows = $this->client->restGet('evaluations', $query);
+        return $rows[0] ?? null;
+    }
+
+    /** LEAVE_EVALUATION_SIGNATURE.md §2.3 — TC-EVAL-007. Stored on both final rows once both exist (no dedicated "final grade" column elsewhere). */
+    private function maybeComputeCombinedGrade(int $internshipId): void
+    {
+        $companyTemplate = $this->getTemplateByType('company_final');
+        $teacherTemplate = $this->getTemplateByType('teacher_final');
+        if ($companyTemplate === null || $teacherTemplate === null) {
+            return;
+        }
+        $companyEval = $this->findEvaluation($internshipId, $companyTemplate['id'], null);
+        $teacherEval = $this->findEvaluation($internshipId, $teacherTemplate['id'], null);
+        if ($companyEval === null || $teacherEval === null || $companyEval['status'] !== 'submitted' || $teacherEval['status'] !== 'submitted') {
+            return;
+        }
+
+        $companyRow = $this->client->restGet('evaluations', 'id=eq.' . $companyEval['id'] . '&select=total_score')[0];
+        $teacherRow = $this->client->restGet('evaluations', 'id=eq.' . $teacherEval['id'] . '&select=total_score')[0];
+
+        $scale = json_decode($this->settings->getString(
+            'grading_scale',
+            '{"weight_company":0.6,"weight_teacher":0.4,"bands":[{"min":80,"grade":"A"},{"min":75,"grade":"B+"},{"min":70,"grade":"B"},{"min":65,"grade":"C+"},{"min":60,"grade":"C"},{"min":0,"grade":"F"}]}'
+        ), true);
+        $finalScore = (float) $companyRow['total_score'] * (float) $scale['weight_company'] + (float) $teacherRow['total_score'] * (float) $scale['weight_teacher'];
+        $grade = 'F';
+        foreach ($scale['bands'] as $band) {
+            if ($finalScore >= (float) $band['min']) {
+                $grade = $band['grade'];
+                break;
+            }
+        }
+
+        $this->client->restUpdate('evaluations', 'id=eq.' . $companyEval['id'], ['grade' => $grade]);
+        $this->client->restUpdate('evaluations', 'id=eq.' . $teacherEval['id'], ['grade' => $grade]);
+    }
+
+    /** GET /evaluations — RULE-EVAL-06: hidden from the student unless settings.score_visible_to_student. */
+    public function getHistoryForInternship(int $internshipId, bool $isStudentViewer): array
+    {
+        if ($isStudentViewer && !$this->settings->getBool('score_visible_to_student', true)) {
+            return [];
+        }
+        $rows = $this->client->restGet(
+            'evaluations',
+            'internship_id=eq.' . $internshipId . '&status=eq.submitted&select=id,template_id,week_number,total_score,grade&order=created_at.desc'
+        );
+        $templates = $this->client->restGet('evaluation_templates', 'select=id,evaluator_type');
+        $typeById = array_column($templates, 'evaluator_type', 'id');
+        return array_map(static fn (array $r) => [
+            'id' => $r['id'],
+            'template' => $typeById[$r['template_id']] ?? '-',
+            'week_number' => $r['week_number'],
+            'total_score' => (float) $r['total_score'],
+            'grade' => $r['grade'],
+        ], $rows);
+    }
+
+    /**
+     * RULE-EVAL-05 exception path. PIN verification itself is Phase 10 scope (not built yet) —
+     * this is gated purely by the caller being role=super_admin (route-level AuthGuard), which
+     * is the same enforcement level every other "admin-only" action in this codebase uses so
+     * far. Every call is written to audit_logs regardless of outcome intent (old/new value).
+     */
+    public function adminOverrideScores(int $evaluationId, array $scores, string $adminUserId): void
+    {
+        $rows = $this->client->restGet('evaluations', 'id=eq.' . $evaluationId . '&select=id,template_id,status');
+        if (!isset($rows[0])) {
+            throw new AuthException('VALIDATION_ERROR', 'ไม่พบแบบประเมินนี้');
+        }
+        $eval = $rows[0];
+        $criteria = $this->client->restGet('evaluation_criteria', 'template_id=eq.' . $eval['template_id'] . '&select=id,criteria_name,max_score');
+        $criteriaById = array_column($criteria, null, 'id');
+
+        $oldScores = $this->client->restGet('evaluation_scores', 'evaluation_id=eq.' . $evaluationId . '&select=criteria_id,score');
+
+        $total = 0.0;
+        $newRows = [];
+        foreach ($scores as $criteriaId => $score) {
+            $criteriaId = (int) $criteriaId;
+            if (!isset($criteriaById[$criteriaId])) {
+                throw new AuthException('VALIDATION_ERROR', 'หัวข้อประเมินไม่ถูกต้อง');
+            }
+            $score = (float) $score;
+            if ($score < 0 || $score > (float) $criteriaById[$criteriaId]['max_score']) {
+                throw new AuthException('VALIDATION_ERROR', 'คะแนน "' . $criteriaById[$criteriaId]['criteria_name'] . '" เกินคะแนนเต็ม');
+            }
+            $total += $score;
+            $newRows[] = ['evaluation_id' => $evaluationId, 'criteria_id' => $criteriaId, 'score' => $score];
+        }
+
+        $this->client->restInsert('evaluation_scores', $newRows, 'evaluation_id,criteria_id');
+        $this->client->restUpdate('evaluations', 'id=eq.' . $evaluationId, ['total_score' => round($total, 2)]);
+
+        (new AuditLogger($this->client))->log(
+            $adminUserId,
+            'super_admin',
+            'override_score',
+            'evaluations',
+            'evaluations',
+            $evaluationId,
+            ['scores' => $oldScores],
+            ['scores' => $newRows]
+        );
+    }
+}

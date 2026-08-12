@@ -1,0 +1,361 @@
+<html lang="th"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"status-success":"#10B981","text-dark-mode":"#E2E8F0","on-tertiary-container":"#ffd2be","primary-container":"#4f46e5","outline-variant":"#c7c4d8","on-primary":"#ffffff","on-secondary-fixed":"#07006c","on-tertiary-fixed-variant":"#7b2f00","surface-tint":"#4d44e3","on-error":"#ffffff","on-primary-fixed-variant":"#3323cc","on-primary-container":"#dad7ff","primary-fixed-dim":"#c3c0ff","surface-variant":"#e4e1ee","background":"#fcf8ff","status-inactive":"#94A3B8","error-container":"#ffdad6","surface":"#fcf8ff","secondary":"#4648d4","status-warning":"#F59E0B","secondary-fixed":"#e1e0ff","surface-bright":"#fcf8ff","on-secondary-container":"#fffbff","bg-dark":"#0F172A","error":"#ba1a1a","tertiary-fixed-dim":"#ffb695","secondary-container":"#6063ee","tertiary-container":"#a44100","primary":"#3525cd","on-background":"#1b1b24","surface-dim":"#dcd8e5","status-error":"#EF4444","outline":"#777587","on-primary-fixed":"#0f0069","tertiary-fixed":"#ffdbcc","inverse-primary":"#c3c0ff","surface-container-high":"#eae6f4","on-secondary":"#ffffff","on-surface":"#1b1b24","surface-container-highest":"#e4e1ee","on-tertiary":"#ffffff","secondary-fixed-dim":"#c0c1ff","on-tertiary-fixed":"#351000","primary-fixed":"#e2dfff","tertiary":"#7e3000","surface-dark":"#1E293B","on-surface-variant":"#464555","bg-light":"#F8FAFC","surface-container-low":"#f5f2ff","inverse-surface":"#302f39","on-secondary-fixed-variant":"#2f2ebe","surface-container":"#f0ecf9","surface-container-lowest":"#ffffff","on-error-container":"#93000a","inverse-on-surface":"#f3effc"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"sidebar-width":"280px","gutter":"1rem","bottom-nav-height":"64px","margin-desktop":"2rem","margin-mobile":"1.25rem","touch-target":"44px"},"fontFamily":{"label-md":["Be Vietnam Pro"],"headline-md":["Plus Jakarta Sans"],"display-metrics":["Plus Jakarta Sans"],"metadata":["Be Vietnam Pro"],"body-lg":["Be Vietnam Pro"],"headline-lg":["Plus Jakarta Sans"],"headline-lg-mobile":["Plus Jakarta Sans"],"body-md":["Be Vietnam Pro"]},"fontSize":{"label-md":["14px",{"lineHeight":"20px","fontWeight":"500"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"display-metrics":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"metadata":["12px",{"lineHeight":"16px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"28px","fontWeight":"400"}],"headline-lg":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}]}}}}</script><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container-low z-50 flex flex-col border-r border-outline-variant/30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"><div class="p-8 pb-10 flex flex-col gap-1"><div class="flex items-center gap-3 text-primary mb-2"><span class="material-symbols-outlined text-[32px]">school</span><span class="font-headline-md text-headline-md tracking-tight">IMS Admin</span></div><p class="text-metadata font-metadata text-on-surface-variant opacity-70 uppercase tracking-widest">Internship Management</p></div><nav class="flex-1 px-4 space-y-1" data-active-classes="bg-primary text-on-primary shadow-lg shadow-primary/20"><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="dashboard" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">dashboard</span><span class="font-label-md text-label-md">แดชบอร์ด</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="approvals" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">fact_check</span><span class="font-label-md text-label-md">อนุมัติรายการ</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="supervisor-matching" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">group_add</span><span class="font-label-md text-label-md">จับคู่ครูนิเทศ</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="internship-rounds" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">event_repeat</span><span class="font-label-md text-label-md">จัดการรอบฝึกงาน</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="data-import" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">upload_file</span><span class="font-label-md text-label-md">นำเข้าข้อมูล (CSV)</span></a><div class="my-4 mx-4 h-px bg-outline-variant/30"></div><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="system-settings" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">settings</span><span class="font-label-md text-label-md">ตั้งค่าระบบ</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="audit-log" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">history_edu</span><span class="font-label-md text-label-md">Audit Log</span></a></nav><div class="p-4 mx-4 mb-6 rounded-2xl bg-primary-container text-on-primary-container"><div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined">support_agent</span><span class="font-label-md text-label-md">Help Center</span></div><p class="text-[11px] opacity-80 leading-relaxed">Need assistance with system administration?</p></div></aside><div class="pl-[280px]"><header class="fixed top-0 left-[280px] right-0 h-20 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-margin-desktop border-b border-outline-variant/10 shadow-sm"><div class="flex items-center gap-4"><div class="bg-surface-container-high p-2 rounded-lg"><span class="material-symbols-outlined text-primary">account_balance</span></div><span class="font-headline-md text-headline-md text-on-surface">คณะวิศวกรรมศาสตร์</span></div><div class="flex items-center gap-6"><button class="relative p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant group"><span class="material-symbols-outlined text-[24px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full ring-2 ring-surface"></span></button><div class="h-8 w-px bg-outline-variant/30"></div><button class="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-surface-container-high transition-all group"><div class="flex flex-col items-end hidden sm:flex"><span class="font-label-md text-label-md text-on-surface">แอดมิน ระบบ</span><span class="text-metadata font-metadata text-on-surface-variant">Super Admin</span></div><div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md shadow-primary/30 group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-on-primary text-[22px]">person</span></div></button></div></header><main class="relative pt-20 bg-background min-h-screen"><div class="p-margin-desktop"><div class="flex flex-col w-full h-full p-6">
+<div class="flex flex-col mb-8 gap-2">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">นำเข้าข้อมูล (CSV)</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">อัปโหลดไฟล์ CSV เพื่อเพิ่มข้อมูลนักศึกษา สถานประกอบการ หรือรายการฝึกงานเข้าสู่ระบบในคราวเดียว</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Main Content Area -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<!-- Tools & Template Card -->
+<div class="bg-surface-container rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center shadow-md text-on-primary-container">
+<span class="material-symbols-outlined text-[24px]">description</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">ไฟล์ตัวอย่างนำเข้าข้อมูล</h3>
+<p class="font-metadata text-metadata text-on-surface-variant">รูปแบบที่ถูกต้องช่วยลดข้อผิดพลาดในการนำเข้า</p>
+</div>
+</div>
+<button class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary hover:scale-[0.98] transition-transform shadow-md font-label-md text-label-md">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                    ดาวน์โหลดไฟล์ตัวอย่าง
+                </button>
+</div>
+<!-- Drag and Drop Zone -->
+<div class="relative group h-80 rounded-2xl bg-surface flex flex-col items-center justify-center p-8 transition-all duration-300 cursor-pointer overflow-hidden shadow-sm hover:shadow-md border-2 border-dashed border-outline-variant hover:border-primary" id="drop-zone">
+<!-- Background Pulse Effect (Visible on Hover/Drag) -->
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" id="drop-pulse"></div>
+<!-- Initial State -->
+<div class="flex flex-col items-center text-center gap-4 z-10 w-full transition-all duration-300" id="upload-idle">
+<div class="relative w-20 h-20 flex items-center justify-center">
+<div class="absolute inset-0 bg-primary-container rounded-full opacity-20 scale-150 animate-ping" style="animation-duration: 3s;"></div>
+<div class="w-20 h-20 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-lg relative z-10 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-[40px]">cloud_upload</span>
+</div>
+</div>
+<div class="mt-4 space-y-1">
+<h3 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">ลากไฟล์มาวางที่นี่</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">หรือ <span class="text-primary font-label-md text-label-md cursor-pointer hover:underline">คลิกเพื่อเลือกไฟล์</span> จากเครื่องของคุณ</p>
+</div>
+<p class="font-metadata text-metadata text-on-surface-variant opacity-70 mt-4">รองรับเฉพาะไฟล์ .csv ขนาดไม่เกิน 10MB</p>
+<input accept=".csv" class="hidden" id="file-input" type="file"/>
+</div>
+<!-- Uploading State (Hidden initially) -->
+<div class="hidden flex-col items-center text-center gap-6 z-10 w-full max-w-md" id="upload-progress">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center animate-bounce">
+<span class="material-symbols-outlined text-primary text-[32px]">sync</span>
+</div>
+<div class="w-full">
+<div class="flex justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface truncate pr-4" id="upload-filename">students_data_2024.csv</span>
+<span class="font-label-md text-label-md text-primary" id="upload-percentage">0%</span>
+</div>
+<div class="w-full h-3 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-0 rounded-full transition-all duration-300 ease-out" id="progress-bar"></div>
+</div>
+</div>
+<p class="font-metadata text-metadata text-on-surface-variant">กำลังตรวจสอบและนำเข้าข้อมูล กรุณารอสักครู่...</p>
+</div>
+</div>
+<!-- Results Summary Panel (Hidden initially) -->
+<div class="hidden flex-col gap-4 transform translate-y-8 opacity-0 transition-all duration-500 ease-out" id="results-panel">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success">check_circle</span>
+                    ผลการนำเข้าข้อมูล
+                </h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container rounded-2xl p-6 shadow-sm border-l-4 border-status-success flex flex-col justify-between">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-status-success">playlist_add_check</span>
+<span class="font-label-md text-label-md text-on-surface-variant">นำเข้าสำเร็จ</span>
+</div>
+<div class="font-display-metrics text-display-metrics text-status-success" id="success-count">118</div>
+<span class="font-metadata text-metadata text-on-surface-variant mt-1">รายการ</span>
+</div>
+<div class="bg-error-container rounded-2xl p-6 shadow-sm border-l-4 border-error flex flex-col justify-between">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-error">error</span>
+<span class="font-label-md text-label-md text-on-error-container">ผิดพลาด</span>
+</div>
+<div class="font-display-metrics text-display-metrics text-error" id="error-count">2</div>
+<span class="font-metadata text-metadata text-on-error-container opacity-80 mt-1">รายการที่ต้องแก้ไข</span>
+</div>
+</div>
+<!-- Expandable Error List -->
+<div class="bg-surface rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden mt-2">
+<button class="w-full flex items-center justify-between p-4 hover:bg-surface-container-lowest transition-colors" id="error-list-toggle">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error">warning</span>
+<span class="font-label-md text-label-md text-on-surface">รายการที่พบข้อผิดพลาด (2)</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform duration-300" id="error-list-icon">expand_more</span>
+</button>
+<div class="hidden border-t border-outline-variant/30 bg-surface-container-lowest" id="error-list-content">
+<ul class="divide-y divide-outline-variant/20">
+<li class="p-4 flex items-start gap-4 hover:bg-surface transition-colors">
+<div class="bg-error-container text-on-error-container w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1">
+<span class="font-label-md text-label-md">42</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">แถวที่ 42: ข้อมูลรหัสนักศึกษาซ้ำซ้อน</p>
+<p class="font-metadata text-metadata text-on-surface-variant mt-1 truncate font-mono">"63010123","สมชาย ใจดี","Engineering","..."</p>
+</div>
+</li>
+<li class="p-4 flex items-start gap-4 hover:bg-surface transition-colors">
+<div class="bg-error-container text-on-error-container w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1">
+<span class="font-label-md text-label-md">89</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">แถวที่ 89: รูปแบบอีเมลไม่ถูกต้อง</p>
+<p class="font-metadata text-metadata text-on-surface-variant mt-1 truncate font-mono">"63010456","Sommai","invalid-email","..."</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="flex justify-end gap-3 mt-4">
+<button class="px-6 py-2 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-colors" onclick="resetUpload()">
+                         อัปโหลดใหม่
+                     </button>
+<button class="px-6 py-2 rounded-xl bg-secondary text-on-secondary shadow-sm hover:scale-[0.98] transition-transform font-label-md text-label-md">
+                         ดำเนินการต่อ
+                     </button>
+</div>
+</div>
+</div>
+<!-- Sidebar Guidelines -->
+<div class="lg:col-span-1 flex flex-col gap-6">
+<div class="bg-surface-container-high rounded-3xl p-6 relative overflow-hidden shadow-sm">
+<!-- Decorative element -->
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
+<div class="absolute -left-8 -bottom-8 w-24 h-24 bg-secondary/10 rounded-full blur-xl"></div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6 relative z-10 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">rule</span>
+                    ข้อกำหนดการนำเข้า
+                </h3>
+<ul class="space-y-4 relative z-10">
+<li class="flex items-start gap-3">
+<div class="mt-0.5 w-5 h-5 rounded-full bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">การเข้ารหัส (Encoding)</p>
+<p class="font-metadata text-metadata text-on-surface-variant mt-1">ไฟล์ต้องเข้ารหัสเป็น UTF-8 เพื่อรองรับภาษาไทย</p>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<div class="mt-0.5 w-5 h-5 rounded-full bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">คอลัมน์บังคับ</p>
+<p class="font-metadata text-metadata text-on-surface-variant mt-1">ห้ามเว้นว่างในคอลัมน์รหัสนักศึกษาและชื่อ-สกุล</p>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<div class="mt-0.5 w-5 h-5 rounded-full bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">รูปแบบวันที่</p>
+<p class="font-metadata text-metadata text-on-surface-variant mt-1">ใช้รูปแบบ YYYY-MM-DD (ค.ศ.) เท่านั้น</p>
+</div>
+</li>
+</ul>
+<div class="mt-8 pt-6 border-t border-outline-variant/20 relative z-10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-warning text-[24px]">lightbulb</span>
+<p class="font-metadata text-metadata text-on-surface-variant leading-relaxed">
+                            เคล็ดลับ: หากมีปัญหาเรื่องภาษาไทยเพี้ยน ให้เปิดไฟล์ด้วย Notepad และ Save As เลือก Encoding เป็น UTF-8
+                        </p>
+</div>
+</div>
+</div>
+<!-- Contextual Image Placeholder -->
+<div class="h-48 rounded-3xl bg-surface-container relative overflow-hidden shadow-sm hidden sm:block">
+<div class="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-40" data-alt="A macro shot of a sleek computer keyboard focusing on the 'Enter' and 'Shift' keys, bathed in soft indigo and cyan ambient lighting, conveying a high-tech, modern data entry environment. Professional, clean, and optimistic mood." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuByb5eX0DfHca382K5UYLStSD8XZBvSnG9Z93iUR6RSF-DO97hEXi5OFsiRim7UQDw0IlkJe99n2vkOUjWYfyJXtEX53P3qGKl632CUHzgtPDi6QVweE3a08o73h_BG0r8-hXsb7-OjbRYqX0heC1M96h8nINbUZemNyH_6MtSE8PTSYfW0Ih8FWPdwbc2q5XMgjpIACjh9Y1VoY4Ye9Id5stNbmLNYymwLzay9UN9JozND1O6PX6_1-BBrFtsEzPR6BMLiuvmDXFCk')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dark/80 to-transparent flex flex-col justify-end p-5">
+<p class="font-label-md text-label-md text-on-primary">Data Integrity</p>
+<p class="font-metadata text-metadata text-outline">Ensuring quality records for IMS.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadIdle = document.getElementById('upload-idle');
+        const uploadProgress = document.getElementById('upload-progress');
+        const progressBar = document.getElementById('progress-bar');
+        const percentageText = document.getElementById('upload-percentage');
+        const filenameText = document.getElementById('upload-filename');
+        const resultsPanel = document.getElementById('results-panel');
+        const errorToggle = document.getElementById('error-list-toggle');
+        const errorContent = document.getElementById('error-list-content');
+        const errorIcon = document.getElementById('error-list-icon');
+        
+        // Handle Drag & Drop styles
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('border-primary', 'bg-primary/5');
+            document.getElementById('drop-pulse').classList.add('opacity-100');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('border-primary', 'bg-primary/5');
+            document.getElementById('drop-pulse').classList.remove('opacity-100');
+        }
+
+        // Handle Drop
+        dropZone.addEventListener('drop', handleDrop, false);
+        
+        // Handle Click to select
+        dropZone.addEventListener('click', (e) => {
+            // Only trigger file input if not already uploading/done
+            if(!uploadProgress.classList.contains('flex') && resultsPanel.classList.contains('hidden')) {
+                fileInput.click();
+            }
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                simulateUpload(this.files[0].name);
+            }
+        });
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                simulateUpload(files[0].name);
+            }
+        }
+
+        function simulateUpload(filename) {
+            // Reset states
+            resultsPanel.classList.add('hidden', 'translate-y-8', 'opacity-0');
+            
+            // Switch UI to upload mode
+            uploadIdle.classList.add('hidden');
+            uploadIdle.classList.remove('flex');
+            
+            uploadProgress.classList.remove('hidden');
+            uploadProgress.classList.add('flex');
+            
+            filenameText.textContent = filename || 'data_import.csv';
+            
+            // Simulate progress
+            let progress = 0;
+            progressBar.style.width = '0%';
+            percentageText.textContent = '0%';
+            
+            dropZone.classList.remove('cursor-pointer');
+            
+            const interval = setInterval(() => {
+                // Random increment for realistic feel
+                progress += Math.floor(Math.random() * 15) + 5;
+                
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    
+                    // Finish upload visually
+                    progressBar.style.width = '100%';
+                    percentageText.textContent = '100%';
+                    
+                    setTimeout(() => {
+                        showResults();
+                    }, 500);
+                } else {
+                    progressBar.style.width = progress + '%';
+                    percentageText.textContent = progress + '%';
+                }
+            }, 300);
+        }
+
+        function showResults() {
+            // Hide dropzone
+            dropZone.style.display = 'none';
+            
+            // Show results
+            resultsPanel.classList.remove('hidden');
+            resultsPanel.classList.add('flex');
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                resultsPanel.classList.remove('translate-y-8', 'opacity-0');
+                
+                // Animate counters
+                animateValue("success-count", 0, 118, 1000);
+                animateValue("error-count", 0, 2, 1000);
+            });
+        }
+        
+        // Counter Animation
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // easeOutQuart
+                const easeProgress = 1 - Math.pow(1 - progress, 4);
+                obj.innerHTML = Math.floor(easeProgress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = end; // Ensure exact final value
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Toggle Error List
+        errorToggle.addEventListener('click', () => {
+            errorContent.classList.toggle('hidden');
+            if(errorContent.classList.contains('hidden')) {
+                errorIcon.style.transform = 'rotate(0deg)';
+            } else {
+                errorIcon.style.transform = 'rotate(180deg)';
+            }
+        });
+
+        // Global function for Reset button
+        window.resetUpload = function() {
+            resultsPanel.classList.add('hidden', 'translate-y-8', 'opacity-0');
+            dropZone.style.display = 'flex';
+            
+            uploadProgress.classList.add('hidden');
+            uploadProgress.classList.remove('flex');
+            
+            uploadIdle.classList.remove('hidden');
+            uploadIdle.classList.add('flex');
+            
+            fileInput.value = ''; // Clear file
+            dropZone.classList.add('cursor-pointer');
+            
+            errorContent.classList.add('hidden');
+            errorIcon.style.transform = 'rotate(0deg)';
+        };
+    });
+</script></div></main></div></body></html>

@@ -1,0 +1,12 @@
+/config/supabase.php
+/config/google_drive.php
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+.env
+*.log
+/storage/logs/*
+!/storage/logs/.gitkeep
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

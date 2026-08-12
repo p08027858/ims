@@ -1,0 +1,32 @@
+<html lang="th"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"on-error-container":"#93000a","on-tertiary-fixed-variant":"#7b2f00","secondary-fixed":"#e1e0ff","inverse-primary":"#c3c0ff","inverse-on-surface":"#f3effc","on-secondary-container":"#fffbff","tertiary":"#7e3000","on-surface-variant":"#464555","outline-variant":"#c7c4d8","surface-dark":"#1E293B","on-primary-fixed":"#0f0069","on-tertiary":"#ffffff","tertiary-container":"#a44100","surface-container-lowest":"#ffffff","bg-light":"#F8FAFC","error":"#ba1a1a","on-secondary":"#ffffff","surface-container-low":"#f5f2ff","secondary":"#4648d4","on-secondary-fixed":"#07006c","inverse-surface":"#302f39","on-primary":"#ffffff","primary-fixed":"#e2dfff","secondary-fixed-dim":"#c0c1ff","on-secondary-fixed-variant":"#2f2ebe","on-background":"#1b1b24","surface-container":"#f0ecf9","bg-dark":"#0F172A","status-success":"#10B981","primary":"#3525cd","status-warning":"#F59E0B","surface-bright":"#fcf8ff","on-primary-container":"#dad7ff","tertiary-fixed-dim":"#ffb695","on-tertiary-fixed":"#351000","primary-container":"#4f46e5","on-tertiary-container":"#ffd2be","background":"#fcf8ff","surface-container-high":"#eae6f4","text-dark-mode":"#E2E8F0","on-primary-fixed-variant":"#3323cc","primary-fixed-dim":"#c3c0ff","outline":"#777587","on-surface":"#1b1b24","surface-tint":"#4d44e3","surface":"#fcf8ff","status-error":"#EF4444","surface-dim":"#dcd8e5","error-container":"#ffdad6","surface-container-highest":"#e4e1ee","on-error":"#ffffff","secondary-container":"#6063ee","tertiary-fixed":"#ffdbcc","surface-variant":"#e4e1ee","status-inactive":"#94A3B8"}}}}</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-surface flex items-center justify-center min-h-screen p-margin-mobile"><main class="w-full max-w-md"><div class="flex flex-col w-full min-h-screen relative overflow-hidden bg-bg-light items-center justify-center p-gutter">
+<div class="absolute inset-0 pointer-events-none overflow-hidden">
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-fixed-dim/30 rounded-full blur-[80px] mix-blend-multiply opacity-70 animate-[pulse_6s_ease-in-out_infinite]"></div>
+<div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-tertiary-fixed-dim/20 rounded-full blur-[60px] mix-blend-multiply opacity-60 animate-[pulse_8s_ease-in-out_infinite_alternate]"></div>
+</div>
+<div class="relative z-10 w-full max-w-sm bg-surface-container-lowest rounded-2xl p-8 flex flex-col items-center text-center shadow-xl shadow-on-background/5 transform transition-all duration-700 ease-out translate-y-4 opacity-0" id="confirmation-card">
+<div class="w-48 h-48 mb-6 relative">
+<div class="absolute inset-0 bg-primary-fixed rounded-full blur-2xl opacity-50 scale-75 animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+<img class="relative w-full h-full object-contain drop-shadow-md" data-alt="A warm, modern 2D flat vector illustration of a friendly character sitting near a stylized oversized clock or hourglass. The character is relaxed and smiling, holding a digital tablet. The color palette uses soft indigo and subtle tertiary accents, clean lines, corporate but highly accessible and encouraging style, isolated on a transparent or white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOw0ROwpgDG9o1t5DAkjPDcnyZ-MV2e2rAq66hrKuMindV647ojNRmtN5STsQqBnEnugJytU9HuoB2rIHewPZMslGrjFIx3dJMDbwYPWd_JUIz6PiOXoxxjpUpYWEiL25WNsamT3XrBiEKH_PpTz3mRSNKU5J0K0ghY332IKI-pblVQNg9qVKbc-D36mY2Pa0_icMgzLiCOflMQZcj_s5ItWcSlES7e5VIKeLin0sh2ZiwMfV3gun2CUYupNB2GUfHC48UM3XVGW-_"/>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-3 tracking-tight">
+      บัญชีของคุณอยู่ระหว่างการอนุมัติ <span class="inline-block animate-bounce" style="animation-duration: 2s;">⏳</span>
+</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8 leading-relaxed max-w-[280px]">
+      เจ้าหน้าที่กำลังตรวจสอบข้อมูลของคุณ ปกติใช้เวลาไม่เกิน 1-2 วันทำการ เราจะแจ้งเตือนทันทีที่พร้อมใช้งาน
+    </p>
+<button class="w-full flex items-center justify-center gap-2 bg-transparent text-primary font-label-md text-label-md px-6 py-4 rounded-xl transition-all duration-300 hover:bg-surface-container active:scale-95 group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" onclick="window.history.back()">
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+<span>กลับไปหน้าเข้าสู่ระบบ</span>
+</button>
+</div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const card = document.getElementById('confirmation-card');
+    requestAnimationFrame(() => {
+      card.classList.remove('translate-y-4', 'opacity-0');
+      card.classList.add('translate-y-0', 'opacity-100');
+    });
+  });
+</script></main></body></html>

@@ -1,0 +1,317 @@
+<html lang="th"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"on-error-container":"#93000a","on-tertiary-fixed-variant":"#7b2f00","secondary-fixed":"#e1e0ff","inverse-primary":"#c3c0ff","inverse-on-surface":"#f3effc","on-secondary-container":"#fffbff","tertiary":"#7e3000","on-surface-variant":"#464555","outline-variant":"#c7c4d8","surface-dark":"#1E293B","on-primary-fixed":"#0f0069","on-tertiary":"#ffffff","tertiary-container":"#a44100","surface-container-lowest":"#ffffff","bg-light":"#F8FAFC","error":"#ba1a1a","on-secondary":"#ffffff","surface-container-low":"#f5f2ff","secondary":"#4648d4","on-secondary-fixed":"#07006c","inverse-surface":"#302f39","on-primary":"#ffffff","primary-fixed":"#e2dfff","secondary-fixed-dim":"#c0c1ff","on-secondary-fixed-variant":"#2f2ebe","on-background":"#1b1b24","surface-container":"#f0ecf9","bg-dark":"#0F172A","status-success":"#10B981","primary":"#3525cd","status-warning":"#F59E0B","surface-bright":"#fcf8ff","on-primary-container":"#dad7ff","tertiary-fixed-dim":"#ffb695","on-tertiary-fixed":"#351000","primary-container":"#4f46e5","on-tertiary-container":"#ffd2be","background":"#fcf8ff","surface-container-high":"#eae6f4","text-dark-mode":"#E2E8F0","on-primary-fixed-variant":"#3323cc","primary-fixed-dim":"#c3c0ff","outline":"#777587","on-surface":"#1b1b24","surface-tint":"#4d44e3","surface":"#fcf8ff","status-error":"#EF4444","surface-dim":"#dcd8e5","error-container":"#ffdad6","surface-container-highest":"#e4e1ee","on-error":"#ffffff","secondary-container":"#6063ee","tertiary-fixed":"#ffdbcc","surface-variant":"#e4e1ee","status-inactive":"#94A3B8"}}}}</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-surface flex items-center justify-center min-h-screen p-margin-mobile"><main class="w-full max-w-md"><div class="flex flex-col w-full h-full relative" id="superadmin-container">
+<!-- Header Section -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">จัดการผู้ดูแลระบบ</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Super Admin Panel - เพิ่ม แก้ไข และกำหนดสิทธิ์การใช้งานระดับผู้ดูแลระบบ</p>
+</div>
+<button aria-label="Add New Admin" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-3 rounded-full hover:bg-primary-container hover:text-on-primary-container transition-all duration-300 shadow-md transform hover:-translate-y-0.5 active:scale-95" id="btn-add-admin">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="font-label-md text-label-md">เพิ่ม Admin ใหม่</span>
+</button>
+</div>
+<!-- Data Table Container -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col flex-1">
+<!-- Table Toolbar -->
+<div class="p-4 border-b border-surface-variant/50 flex justify-between items-center bg-surface-container-low/50">
+<div class="relative w-full max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface rounded-full font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow" placeholder="ค้นหาชื่อ, อีเมล..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Filter" class="p-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md border-b border-surface-variant/50">
+<th class="py-3 px-4 font-semibold whitespace-nowrap w-[25%]">ชื่อ-นามสกุล</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap w-[20%]">คณะ/หน่วยงาน</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap w-[15%]">ระดับสิทธิ์</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap w-[10%]">สถานะ</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap w-[15%]">ใช้งานล่าสุด</th>
+<th class="py-3 px-4 font-semibold whitespace-nowrap w-[15%] text-right">จัดการ</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<!-- Row 1 -->
+<tr class="border-b border-surface-variant/30 hover:bg-surface-container-low/50 transition-colors group">
+<td class="py-3 px-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold font-display-metrics">ส</div>
+<div>
+<div class="font-semibold">สมชาย ใจดี</div>
+<div class="text-on-surface-variant text-sm text-[13px]">somchai.j@univ.ac.th</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">คณะวิศวกรรมศาสตร์</td>
+<td class="py-3 px-4">
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[12px] font-medium font-metadata">คณะผู้ดูแล</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-status-success"></span>
+</span>
+<span class="text-status-success font-medium text-[13px]">Active</span>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant text-[13px]">12 พ.ย. 66, 14:30</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button aria-label="Edit Permissions" class="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-variant transition-colors" title="แก้ไขสิทธิ์">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button aria-label="Deactivate" class="p-2 text-on-surface-variant hover:text-status-error rounded-full hover:bg-error-container/50 transition-colors" title="ปิดใช้งาน">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-surface-variant/30 hover:bg-surface-container-low/50 transition-colors group">
+<td class="py-3 px-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold font-display-metrics">ว</div>
+<div>
+<div class="font-semibold">วันเพ็ญ เดือนสิบสอง</div>
+<div class="text-on-surface-variant text-[13px]">wanpen.d@univ.ac.th</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">คณะบริหารธุรกิจ</td>
+<td class="py-3 px-4">
+<span class="px-2.5 py-1 rounded-full bg-surface-variant text-on-surface-variant text-[12px] font-medium font-metadata">ผู้ประสานงานหลัก</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-status-success"></span>
+</span>
+<span class="text-status-success font-medium text-[13px]">Active</span>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant text-[13px]">วันนี้, 09:15</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-variant transition-colors" title="แก้ไขสิทธิ์">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-status-error rounded-full hover:bg-error-container/50 transition-colors" title="ปิดใช้งาน">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 (Inactive) -->
+<tr class="border-b border-surface-variant/30 hover:bg-surface-container-low/50 transition-colors group opacity-60">
+<td class="py-3 px-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold font-display-metrics">จ</div>
+<div>
+<div class="font-semibold text-on-surface-variant">จตุพล ผลประเสริฐ</div>
+<div class="text-on-surface-variant text-[13px]">jatupol.p@univ.ac.th</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">กองบริการการศึกษา</td>
+<td class="py-3 px-4">
+<span class="px-2.5 py-1 rounded-full bg-surface-variant text-on-surface-variant text-[12px] font-medium font-metadata">ผู้ประสานงานหลัก</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-status-inactive"></span>
+<span class="text-status-inactive font-medium text-[13px]">Inactive</span>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant text-[13px]">-</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-variant transition-colors" title="แก้ไขสิทธิ์">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-status-success rounded-full hover:bg-status-success/10 transition-colors" title="เปิดใช้งาน">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination (Mock) -->
+<div class="p-4 border-t border-surface-variant/50 flex items-center justify-between bg-surface-container-lowest text-on-surface-variant font-label-md text-[13px]">
+<div>แสดง 1-3 จาก 15 รายการ</div>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded hover:bg-surface-variant disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="w-8 h-8 rounded bg-primary text-on-primary flex items-center justify-center font-medium">1</button>
+<button class="w-8 h-8 rounded hover:bg-surface-variant flex items-center justify-center font-medium">2</button>
+<button class="w-8 h-8 rounded hover:bg-surface-variant flex items-center justify-center font-medium">3</button>
+<button class="p-1 rounded hover:bg-surface-variant"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+<!-- Right Drawer Overlay: Add New Admin -->
+<!-- Backdrop -->
+<div class="fixed inset-0 bg-on-background/20 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300" id="drawer-backdrop"></div>
+<!-- Drawer Panel -->
+<div class="fixed top-0 right-0 bottom-0 w-full max-w-md bg-surface-container-lowest shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] flex flex-col" id="admin-drawer">
+<!-- Drawer Header -->
+<div class="flex items-center justify-between p-6 border-b border-surface-variant/30">
+<h3 class="font-headline-md text-headline-md text-on-surface">เพิ่มผู้ดูแลระบบใหม่</h3>
+<button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors flex items-center justify-center" id="btn-close-drawer">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Content (Form) -->
+<div class="flex-1 overflow-y-auto p-6">
+<form class="flex flex-col gap-5" id="form-add-admin">
+<!-- Profile Pic Placeholder (Decorative) -->
+<div class="flex justify-center mb-4">
+<div class="relative group cursor-pointer">
+<div class="w-24 h-24 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant">person</span>
+</div>
+<div class="absolute inset-0 bg-on-background/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white">photo_camera</span>
+</div>
+</div>
+</div>
+<!-- Input Group: Name -->
+<div class="flex flex-col gap-1.5 relative">
+<label class="font-label-md text-label-md text-on-surface">ชื่อ-นามสกุล <span class="text-status-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 text-[20px]">badge</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface" placeholder="ระบุชื่อจริงและนามสกุล" required="" type="text"/>
+</div>
+</div>
+<!-- Input Group: Email -->
+<div class="flex flex-col gap-1.5 relative">
+<label class="font-label-md text-label-md text-on-surface">อีเมล <span class="text-status-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 text-[20px]">mail</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface" placeholder="example@univ.ac.th" required="" type="email"/>
+</div>
+</div>
+<!-- Input Group: Faculty (Select) -->
+<div class="flex flex-col gap-1.5 relative">
+<label class="font-label-md text-label-md text-on-surface">สังกัด / คณะ <span class="text-status-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 text-[20px]">account_balance</span>
+<select class="w-full pl-10 pr-10 py-3 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface appearance-none" required="">
+<option disabled="" selected="" value="">เลือกคณะหรือหน่วยงาน</option>
+<option value="eng">คณะวิศวกรรมศาสตร์</option>
+<option value="bus">คณะบริหารธุรกิจ</option>
+<option value="sci">คณะวิทยาศาสตร์</option>
+<option value="it">ศูนย์เทคโนโลยีสารสนเทศ</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Input Group: Role Assignment (Radio Cards) -->
+<div class="flex flex-col gap-3 mt-2">
+<label class="font-label-md text-label-md text-on-surface">กำหนดระดับสิทธิ์การเข้าถึง <span class="text-status-error">*</span></label>
+<label class="relative flex p-4 cursor-pointer rounded-xl border border-outline-variant hover:bg-surface-container-low transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-container/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+<input checked="" class="peer sr-only" name="admin_role" type="radio" value="faculty_admin"/>
+<div class="flex items-start gap-4">
+<div class="mt-0.5 w-5 h-5 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:border-[6px] transition-all"></div>
+<div>
+<h4 class="font-headline-md text-[16px] font-semibold text-on-surface">คณะผู้ดูแล (Faculty Admin)</h4>
+<p class="font-body-md text-[13px] text-on-surface-variant mt-1">จัดการข้อมูลและผู้ใช้งานเฉพาะในคณะ/สังกัดของตนเองเท่านั้น</p>
+</div>
+</div>
+</label>
+<label class="relative flex p-4 cursor-pointer rounded-xl border border-outline-variant hover:bg-surface-container-low transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-container/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+<input class="peer sr-only" name="admin_role" type="radio" value="coordinator"/>
+<div class="flex items-start gap-4">
+<div class="mt-0.5 w-5 h-5 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:border-[6px] transition-all"></div>
+<div>
+<h4 class="font-headline-md text-[16px] font-semibold text-on-surface">ผู้ประสานงานหลัก (Coordinator)</h4>
+<p class="font-body-md text-[13px] text-on-surface-variant mt-1">ดูภาพรวมและจัดการข้อมูลข้ามคณะได้ แต่ไม่สามารถลบข้อมูลหลักได้</p>
+</div>
+</div>
+</label>
+<label class="relative flex p-4 cursor-pointer rounded-xl border border-outline-variant hover:bg-surface-container-low transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-container/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+<input class="peer sr-only" name="admin_role" type="radio" value="super_admin"/>
+<div class="flex items-start gap-4">
+<div class="mt-0.5 w-5 h-5 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:border-[6px] transition-all"></div>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="font-headline-md text-[16px] font-semibold text-status-error">Super Admin</h4>
+<span class="material-symbols-outlined text-[16px] text-status-error">warning</span>
+</div>
+<p class="font-body-md text-[13px] text-on-surface-variant mt-1">สิทธิ์สูงสุด จัดการระบบ โครงสร้าง และลบข้อมูลทั้งหมดได้</p>
+</div>
+</div>
+</label>
+</div>
+</form>
+</div>
+<!-- Drawer Footer (Actions) -->
+<div class="p-6 border-t border-surface-variant/30 bg-surface-container-lowest flex gap-3 justify-end">
+<button class="px-5 py-2.5 rounded-full font-label-md text-label-md text-on-surface border border-outline-variant hover:bg-surface-variant transition-colors" id="btn-cancel-drawer">ยกเลิก</button>
+<button class="px-5 py-2.5 rounded-full font-label-md text-label-md bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm active:scale-95 transform" form="form-add-admin" type="submit">
+                บันทึกข้อมูล
+            </button>
+</div>
+</div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnAdd = document.getElementById('btn-add-admin');
+        const btnClose = document.getElementById('btn-close-drawer');
+        const btnCancel = document.getElementById('btn-cancel-drawer');
+        const drawer = document.getElementById('admin-drawer');
+        const backdrop = document.getElementById('drawer-backdrop');
+
+        function openDrawer() {
+            backdrop.classList.remove('hidden');
+            // small delay to allow display:block to apply before animating opacity
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                drawer.classList.remove('translate-x-full');
+            }, 10);
+            document.body.style.overflow = 'hidden'; // prevent bg scroll
+        }
+
+        function closeDrawer() {
+            drawer.classList.add('translate-x-full');
+            backdrop.classList.add('opacity-0');
+            
+            // wait for transition to finish before hiding backdrop
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300); // matches duration-300
+        }
+
+        btnAdd.addEventListener('click', openDrawer);
+        btnClose.addEventListener('click', closeDrawer);
+        btnCancel.addEventListener('click', closeDrawer);
+        backdrop.addEventListener('click', closeDrawer);
+        
+        // Prevent form submit for demo
+        document.getElementById('form-add-admin').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Simulate saving
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span> บันทึก...';
+            
+            setTimeout(() => {
+                submitBtn.innerText = originalText;
+                closeDrawer();
+                // Reset form
+                e.target.reset();
+            }, 1000);
+        });
+    });
+</script></main></body></html>

@@ -1,0 +1,286 @@
+<html lang="th"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"status-success":"#10B981","text-dark-mode":"#E2E8F0","on-tertiary-container":"#ffd2be","primary-container":"#4f46e5","outline-variant":"#c7c4d8","on-primary":"#ffffff","on-secondary-fixed":"#07006c","on-tertiary-fixed-variant":"#7b2f00","surface-tint":"#4d44e3","on-error":"#ffffff","on-primary-fixed-variant":"#3323cc","on-primary-container":"#dad7ff","primary-fixed-dim":"#c3c0ff","surface-variant":"#e4e1ee","background":"#fcf8ff","status-inactive":"#94A3B8","error-container":"#ffdad6","surface":"#fcf8ff","secondary":"#4648d4","status-warning":"#F59E0B","secondary-fixed":"#e1e0ff","surface-bright":"#fcf8ff","on-secondary-container":"#fffbff","bg-dark":"#0F172A","error":"#ba1a1a","tertiary-fixed-dim":"#ffb695","secondary-container":"#6063ee","tertiary-container":"#a44100","primary":"#3525cd","on-background":"#1b1b24","surface-dim":"#dcd8e5","status-error":"#EF4444","outline":"#777587","on-primary-fixed":"#0f0069","tertiary-fixed":"#ffdbcc","inverse-primary":"#c3c0ff","surface-container-high":"#eae6f4","on-secondary":"#ffffff","on-surface":"#1b1b24","surface-container-highest":"#e4e1ee","on-tertiary":"#ffffff","secondary-fixed-dim":"#c0c1ff","on-tertiary-fixed":"#351000","primary-fixed":"#e2dfff","tertiary":"#7e3000","surface-dark":"#1E293B","on-surface-variant":"#464555","bg-light":"#F8FAFC","surface-container-low":"#f5f2ff","inverse-surface":"#302f39","on-secondary-fixed-variant":"#2f2ebe","surface-container":"#f0ecf9","surface-container-lowest":"#ffffff","on-error-container":"#93000a","inverse-on-surface":"#f3effc"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"sidebar-width":"280px","gutter":"1rem","bottom-nav-height":"64px","margin-desktop":"2rem","margin-mobile":"1.25rem","touch-target":"44px"},"fontFamily":{"label-md":["Be Vietnam Pro"],"headline-md":["Plus Jakarta Sans"],"display-metrics":["Plus Jakarta Sans"],"metadata":["Be Vietnam Pro"],"body-lg":["Be Vietnam Pro"],"headline-lg":["Plus Jakarta Sans"],"headline-lg-mobile":["Plus Jakarta Sans"],"body-md":["Be Vietnam Pro"]},"fontSize":{"label-md":["14px",{"lineHeight":"20px","fontWeight":"500"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"display-metrics":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"metadata":["12px",{"lineHeight":"16px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"28px","fontWeight":"400"}],"headline-lg":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}]}}}}</script><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container-low z-50 flex flex-col border-r border-outline-variant/30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"><div class="p-8 pb-10 flex flex-col gap-1"><div class="flex items-center gap-3 text-primary mb-2"><span class="material-symbols-outlined text-[32px]">school</span><span class="font-headline-md text-headline-md tracking-tight">IMS Admin</span></div><p class="text-metadata font-metadata text-on-surface-variant opacity-70 uppercase tracking-widest">Internship Management</p></div><nav class="flex-1 px-4 space-y-1" data-active-classes="bg-primary text-on-primary shadow-lg shadow-primary/20"><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="dashboard" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">dashboard</span><span class="font-label-md text-label-md">แดชบอร์ด</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="approvals" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">fact_check</span><span class="font-label-md text-label-md">อนุมัติรายการ</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="supervisor-matching" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">group_add</span><span class="font-label-md text-label-md">จับคู่ครูนิเทศ</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="internship-rounds" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">event_repeat</span><span class="font-label-md text-label-md">จัดการรอบฝึกงาน</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="data-import" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">upload_file</span><span class="font-label-md text-label-md">นำเข้าข้อมูล (CSV)</span></a><div class="my-4 mx-4 h-px bg-outline-variant/30"></div><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="system-settings" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">settings</span><span class="font-label-md text-label-md">ตั้งค่าระบบ</span></a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-200 group" data-path="audit-log" href="#"><span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform">history_edu</span><span class="font-label-md text-label-md">Audit Log</span></a></nav><div class="p-4 mx-4 mb-6 rounded-2xl bg-primary-container text-on-primary-container"><div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined">support_agent</span><span class="font-label-md text-label-md">Help Center</span></div><p class="text-[11px] opacity-80 leading-relaxed">Need assistance with system administration?</p></div></aside><div class="pl-[280px]"><header class="fixed top-0 left-[280px] right-0 h-20 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-margin-desktop border-b border-outline-variant/10 shadow-sm"><div class="flex items-center gap-4"><div class="bg-surface-container-high p-2 rounded-lg"><span class="material-symbols-outlined text-primary">account_balance</span></div><span class="font-headline-md text-headline-md text-on-surface">คณะวิศวกรรมศาสตร์</span></div><div class="flex items-center gap-6"><button class="relative p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant group"><span class="material-symbols-outlined text-[24px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full ring-2 ring-surface"></span></button><div class="h-8 w-px bg-outline-variant/30"></div><button class="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-surface-container-high transition-all group"><div class="flex flex-col items-end hidden sm:flex"><span class="font-label-md text-label-md text-on-surface">แอดมิน ระบบ</span><span class="text-metadata font-metadata text-on-surface-variant">Super Admin</span></div><div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md shadow-primary/30 group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-on-primary text-[22px]">person</span></div></button></div></header><main class="relative pt-20 bg-background min-h-screen"><div class="p-margin-desktop"><div class="flex flex-col w-full gap-gutter">
+<!-- Header Section -->
+<div class="flex items-center justify-between mb-2">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-background mb-1">จับคู่ครูนิเทศ</h1>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-80">กำหนดครูนิเทศสำหรับนักศึกษาที่เลือกและสถานประกอบการ</p>
+</div>
+<div class="bg-surface-container-high rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">info</span>
+<span class="font-label-md text-label-md text-on-surface-variant">รหัสรอบ: S2-2024</span>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-gutter items-start">
+<!-- Left Column: Student & Company Summary -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-gutter">
+<!-- Student Card -->
+<div class="bg-surface rounded-2xl p-6 shadow-md relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-primary-fixed-dim/20 rounded-full blur-3xl group-hover:bg-primary-fixed-dim/40 transition-colors"></div>
+<div class="flex items-center gap-4 mb-6">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest overflow-hidden relative shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of a young Thai university student, smiling confidently, wearing a crisp white collared shirt, well-lit studio lighting against a clean light background, modern corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1hyV1AcfrFOh-NDv3efK3S6zL6_Sqaju7X8LdY8zPXrpbncxlN4ZZDHiE1vfbH1LtBhWRzeY3LHfsniEZ79WddAW99DWFQEHNJi60hZGmBfg_M8C79vLcoP5NujIhDRiKwFLV2mVLBiCCWZC1h3TP38zs-S3cEQG6xayxdK9jYpg2fIyM56B5UOysSmbKDPo4KrrXh6tIlPzXrVhGOTYIxpXdQeuI8BzoAYrgmdWIgSCUCJtwX309pp9S7U3i0fNM-1dtC9PHLpP4"/>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">นายสมชาย ใจดี</h2>
+<p class="font-label-md text-label-md text-primary tracking-wide">64010123 • วิศวกรรมคอมพิวเตอร์</p>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="font-label-md text-label-md text-on-surface-variant">GPAX</span>
+<span class="font-headline-md text-[18px] text-on-surface">3.75</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="font-label-md text-label-md text-on-surface-variant">สถานะ</span>
+<span class="bg-status-success/10 text-status-success px-3 py-1 rounded-full font-label-md text-[12px] flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-status-success rounded-full"></span> รอจับคู่
+            </span>
+</div>
+</div>
+</div>
+<!-- Company Card -->
+<div class="bg-surface rounded-2xl p-6 shadow-md relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+<div class="absolute -left-10 -bottom-10 w-40 h-40 bg-tertiary-fixed-dim/20 rounded-full blur-3xl group-hover:bg-tertiary-fixed-dim/40 transition-colors"></div>
+<div class="flex items-start gap-4 mb-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-[24px]">corporate_fare</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-[18px] text-on-surface mb-1">บริษัท เทคอินโนเวชั่น จำกัด</h3>
+<p class="font-body-md text-metadata text-on-surface-variant line-clamp-2">123 อาคารสาทรสแควร์ ชั้น 20 ถ.สาทรเหนือ บางรัก กทม. 10500</p>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-4 mt-2">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]">work</span>
+<span class="font-label-md text-label-md text-on-surface">ตำแหน่ง: Software Engineer Intern</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]">person</span>
+<span class="font-metadata text-metadata text-on-surface-variant">พี่เลี้ยง: คุณวิชัย ใจตรง (HR)</span>
+</div>
+</div>
+<!-- Small Map Visual -->
+<div class="mt-4 h-24 rounded-xl overflow-hidden shadow-sm relative">
+<div class="w-full h-full bg-cover bg-center" data-location="Sathorn Square, Bangkok, Thailand" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAQMVZvL6xSKBYPssa2dK6HXm8HOv_2U5QvBt7sCUZGZYwSWER0d2yQqWfMxxYRGwlPE6ZUFmXp2-8rTJ78h3FixVlWjfmg8_5M4q3FeXLzgP92Onzfu0XrX_FmjvC2OZBnSK2MXjXCgo0UUBYHICuuFOKiwr5VHCdLBHYMQOYzSOhVvBjqL2iGXXD80jmQCYzKAnwKL7Zs1j4Ad5wqO7vcAE7q9E91oxBEDSn1_t6vAx4OESUvnz-uIWoes_--S6eDJeJK3mEhw0yj')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-2">
+<span class="text-white font-metadata text-[10px] flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">location_on</span> ดูแผนที่</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Matching Form -->
+<div class="col-span-12 lg:col-span-7 bg-surface rounded-2xl p-8 shadow-xl relative z-10">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[28px] bg-primary/10 p-2 rounded-xl">supervisor_account</span>
+        ระบุข้อมูลการนิเทศ
+      </h2>
+<!-- Searchable Dropdown: Supervisor -->
+<div class="mb-8 relative" id="supervisor-dropdown-container">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">เลือกครูนิเทศ <span class="text-error">*</span></label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input autocomplete="off" class="w-full pl-12 pr-10 py-4 bg-surface-container-low text-on-surface font-body-lg text-[16px] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow shadow-sm placeholder:text-outline-variant" id="supervisor-search" placeholder="พิมพ์ชื่อ, นามสกุล หรือภาควิชา..." type="text"/>
+<div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline transition-transform duration-300" id="dropdown-chevron">expand_more</span>
+</div>
+</div>
+<!-- Dropdown Menu -->
+<div class="absolute z-50 w-full mt-2 bg-surface-container-lowest rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] opacity-0 scale-95 origin-top pointer-events-none transition-all duration-200 max-h-64 overflow-y-auto hidden-scrollbar" id="supervisor-menu">
+<ul class="py-2 flex flex-col gap-1 px-2" id="supervisor-list">
+<!-- List items will be populated/filtered here -->
+<li class="px-4 py-3 hover:bg-surface-container rounded-lg cursor-pointer flex items-center gap-3 transition-colors supervisor-item" data-dept="วิศวกรรมคอมพิวเตอร์" data-name="ดร.สมศักดิ์ รักเรียน" data-quota="2/5">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-headline-md">ส</div>
+<div class="flex-1">
+<div class="font-label-md text-[15px] text-on-surface">ดร.สมศักดิ์ รักเรียน</div>
+<div class="font-metadata text-[12px] text-on-surface-variant">วิศวกรรมคอมพิวเตอร์</div>
+</div>
+<div class="bg-surface-container-high px-2 py-1 rounded-md flex flex-col items-end">
+<span class="font-metadata text-[10px] text-outline">ภาระงาน</span>
+<span class="font-label-md text-[12px] text-on-surface">2/5</span>
+</div>
+</li>
+<li class="px-4 py-3 hover:bg-surface-container rounded-lg cursor-pointer flex items-center gap-3 transition-colors supervisor-item" data-dept="วิศวกรรมซอฟต์แวร์" data-name="ผศ.ดร.วิไลวรรณ สุขใจ" data-quota="4/5">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-headline-md">ว</div>
+<div class="flex-1">
+<div class="font-label-md text-[15px] text-on-surface">ผศ.ดร.วิไลวรรณ สุขใจ</div>
+<div class="font-metadata text-[12px] text-on-surface-variant">วิศวกรรมซอฟต์แวร์</div>
+</div>
+<div class="bg-surface-container-high px-2 py-1 rounded-md flex flex-col items-end">
+<span class="font-metadata text-[10px] text-outline">ภาระงาน</span>
+<span class="font-label-md text-[12px] text-status-warning">4/5</span>
+</div>
+</li>
+<li class="px-4 py-3 hover:bg-surface-container rounded-lg cursor-pointer flex items-center gap-3 transition-colors supervisor-item" data-dept="วิศวกรรมคอมพิวเตอร์" data-name="อ.ประเสริฐ เลิศปัญญา" data-quota="1/5">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary font-headline-md">ป</div>
+<div class="flex-1">
+<div class="font-label-md text-[15px] text-on-surface">อ.ประเสริฐ เลิศปัญญา</div>
+<div class="font-metadata text-[12px] text-on-surface-variant">วิศวกรรมคอมพิวเตอร์</div>
+</div>
+<div class="bg-surface-container-high px-2 py-1 rounded-md flex flex-col items-end">
+<span class="font-metadata text-[10px] text-outline">ภาระงาน</span>
+<span class="font-label-md text-[12px] text-status-success">1/5</span>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<!-- Date Pickers -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">ช่วงเวลาเริ่มต้น <span class="text-error">*</span></label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">calendar_month</span>
+</div>
+<input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low text-on-surface font-body-md text-[15px] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow shadow-sm" type="date" value="2024-06-01"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">ช่วงเวลาสิ้นสุด <span class="text-error">*</span></label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">event_upcoming</span>
+</div>
+<input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low text-on-surface font-body-md text-[15px] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow shadow-sm" type="date" value="2024-09-30"/>
+</div>
+</div>
+</div>
+<!-- Selected Summary (Dynamic) -->
+<div class="hidden mb-8 bg-surface-container-low border-l-4 border-primary p-4 rounded-r-xl transition-all duration-300" id="selection-summary">
+<h4 class="font-label-md text-[13px] text-on-surface-variant uppercase tracking-wider mb-1">สรุปการจับคู่</h4>
+<p class="font-body-md text-[15px] text-on-surface"><span class="font-label-md text-primary" id="summary-student">นายสมชาย ใจดี</span> จะได้รับการนิเทศโดย <span class="font-label-md text-secondary" id="summary-supervisor">...</span></p>
+</div>
+<!-- Actions -->
+<div class="flex justify-end gap-4 mt-auto">
+<button class="px-6 py-3 rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-colors shadow-sm bg-surface">ยกเลิก</button>
+<button class="relative overflow-hidden px-8 py-3 rounded-xl font-label-md text-label-md text-on-primary bg-primary shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 flex items-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" disabled="" id="submit-btn">
+<span class="material-symbols-outlined group-hover:rotate-12 transition-transform">handshake</span>
+          ยืนยันจับคู่
+          
+          <!-- Loading Spinner -->
+<div class="absolute inset-0 bg-primary flex items-center justify-center opacity-0 pointer-events-none transition-opacity" id="btn-spinner">
+<span class="material-symbols-outlined animate-spin">progress_activity</span>
+</div>
+</button>
+</div>
+<!-- Success Overlay -->
+<div class="absolute inset-0 bg-surface/90 backdrop-blur-sm z-50 rounded-2xl flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500 scale-95" id="success-overlay">
+<div class="w-24 h-24 bg-status-success rounded-full flex items-center justify-center shadow-xl shadow-status-success/40 mb-6 scale-0" id="success-icon">
+<span class="material-symbols-outlined text-white text-[48px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h3 class="font-headline-lg text-[24px] text-on-surface mb-2 opacity-0 translate-y-4" id="success-title">จับคู่สำเร็จ!</h3>
+<p class="font-body-md text-on-surface-variant text-center max-w-xs opacity-0 translate-y-4" id="success-desc">บันทึกข้อมูลการจับคู่ครูนิเทศเรียบร้อยแล้ว ระบบจะส่งการแจ้งเตือนไปยังผู้เกี่ยวข้อง</p>
+</div>
+</div>
+</div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('supervisor-search');
+    const menu = document.getElementById('supervisor-menu');
+    const items = document.querySelectorAll('.supervisor-item');
+    const chevron = document.getElementById('dropdown-chevron');
+    const submitBtn = document.getElementById('submit-btn');
+    const summary = document.getElementById('selection-summary');
+    const summarySup = document.getElementById('summary-supervisor');
+    const container = document.getElementById('supervisor-dropdown-container');
+
+    // Dropdown Logic
+    const openMenu = () => {
+      menu.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+      chevron.classList.add('rotate-180');
+    };
+
+    const closeMenu = () => {
+      menu.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+      chevron.classList.remove('rotate-180');
+    };
+
+    searchInput.addEventListener('focus', openMenu);
+    
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        closeMenu();
+      }
+    });
+
+    // Filtering
+    searchInput.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      items.forEach(item => {
+        const name = item.dataset.name.toLowerCase();
+        const dept = item.dataset.dept.toLowerCase();
+        if (name.includes(term) || dept.includes(term)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+      openMenu();
+    });
+
+    // Selection
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        const name = item.dataset.name;
+        searchInput.value = name;
+        closeMenu();
+        
+        // Update summary & enable button
+        summarySup.textContent = name;
+        summary.classList.remove('hidden');
+        submitBtn.disabled = false;
+        
+        // Slight pulse animation on summary
+        summary.animate([
+          { transform: 'scale(0.98)', opacity: 0.8 },
+          { transform: 'scale(1)', opacity: 1 }
+        ], { duration: 300, easing: 'ease-out' });
+      });
+    });
+
+    // Submit Animation
+    submitBtn.addEventListener('click', () => {
+      const spinner = document.getElementById('btn-spinner');
+      const overlay = document.getElementById('success-overlay');
+      const icon = document.getElementById('success-icon');
+      const title = document.getElementById('success-title');
+      const desc = document.getElementById('success-desc');
+
+      // 1. Show spinner on button
+      spinner.classList.remove('opacity-0');
+      submitBtn.classList.add('pointer-events-none');
+
+      // 2. Simulate API call
+      setTimeout(() => {
+        // 3. Show Success Overlay
+        overlay.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+        overlay.classList.add('scale-100');
+        
+        // Sequence internal animations
+        setTimeout(() => {
+          icon.style.transform = 'scale(1)';
+          icon.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        }, 100);
+
+        setTimeout(() => {
+          title.style.opacity = '1';
+          title.style.transform = 'translateY(0)';
+          title.style.transition = 'all 0.4s ease-out';
+        }, 300);
+
+        setTimeout(() => {
+          desc.style.opacity = '1';
+          desc.style.transform = 'translateY(0)';
+          desc.style.transition = 'all 0.4s ease-out';
+        }, 450);
+
+      }, 800);
+    });
+  });
+</script></div></main></div></body></html>

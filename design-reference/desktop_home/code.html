@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Dashboard - IMS THAI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#f0ecf9",
+                    "on-tertiary-fixed": "#351000",
+                    "surface-tint": "#4d44e3",
+                    "on-error": "#ffffff",
+                    "surface-dark": "#1E293B",
+                    "tertiary-container": "#a44100",
+                    "inverse-on-surface": "#f3effc",
+                    "surface-dim": "#dcd8e5",
+                    "on-primary": "#ffffff",
+                    "status-success": "#10B981",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "tertiary-fixed": "#ffdbcc",
+                    "on-tertiary-fixed-variant": "#7b2f00",
+                    "primary-container": "#4f46e5",
+                    "outline-variant": "#c7c4d8",
+                    "inverse-surface": "#302f39",
+                    "on-background": "#1b1b24",
+                    "surface-container-low": "#f5f2ff",
+                    "text-dark-mode": "#E2E8F0",
+                    "on-primary-fixed": "#0f0069",
+                    "error-container": "#ffdad6",
+                    "surface": "#fcf8ff",
+                    "tertiary-fixed-dim": "#ffb695",
+                    "status-error": "#EF4444",
+                    "on-surface": "#1b1b24",
+                    "outline": "#777587",
+                    "surface-container-highest": "#e4e1ee",
+                    "bg-dark": "#0F172A",
+                    "background": "#fcf8ff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#6063ee",
+                    "surface-variant": "#e4e1ee",
+                    "on-secondary": "#ffffff",
+                    "surface-bright": "#fcf8ff",
+                    "tertiary": "#7e3000",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "on-tertiary-container": "#ffd2be",
+                    "status-inactive": "#94A3B8",
+                    "on-secondary-fixed-variant": "#2f2ebe",
+                    "on-error-container": "#93000a",
+                    "on-surface-variant": "#464555",
+                    "on-tertiary": "#ffffff",
+                    "bg-light": "#F8FAFC",
+                    "primary": "#3525cd",
+                    "on-secondary-fixed": "#07006c",
+                    "secondary-fixed-dim": "#c0c1ff",
+                    "error": "#ba1a1a",
+                    "on-primary-container": "#dad7ff",
+                    "secondary": "#4648d4",
+                    "on-secondary-container": "#fffbff",
+                    "secondary-fixed": "#e1e0ff",
+                    "inverse-primary": "#c3c0ff",
+                    "primary-fixed": "#e2dfff",
+                    "status-warning": "#F59E0B",
+                    "surface-container-high": "#eae6f4"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sidebar-width": "280px",
+                    "margin-mobile": "1.25rem",
+                    "margin-desktop": "2rem",
+                    "touch-target": "44px",
+                    "gutter": "1rem",
+                    "bottom-nav-height": "64px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "metadata": ["Be Vietnam Pro"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-md": ["Be Vietnam Pro"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "label-md": ["Be Vietnam Pro"],
+                    "display-metrics": ["Plus Jakarta Sans"],
+                    "body-lg": ["Be Vietnam Pro"]
+            },
+            "fontSize": {
+                    "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "metadata": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "display-metrics": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+          font-variation-settings: 'FILL' 1;
+        }
+        
+        .shadow-soft {
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="bg-bg-light text-on-surface font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full w-sidebar-width hidden lg:flex flex-col bg-surface-container-low dark:bg-surface-dark border-r border-outline-variant dark:border-surface-variant z-40">
+<div class="flex flex-col gap-2 p-4 w-sidebar-width h-full">
+<!-- Header -->
+<div class="flex items-center gap-3 mb-8 px-4">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A clean, minimalist abstract geometric logo representing a modern university system, featuring subtle intersecting shapes in professional indigo and navy tones on a crisp white background, suitable for a corporate style dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCipquKW0j_LeUcTsC0GpuZVtb_j1eef0s3cbnR8CmhNgyjQWQVf85BStMrpu16TfTG9lp3ZTMbnFa2IsHP3oElzTXq0G6pvnAA5n1qp-WOWFu51LTgZ-113KtQ8nZS7UQyAsLmk68Ym8ZVPCQaVMTg-hQ_9GR71rSUFhGbPoeQ08jptAAzRfq9uWg_eDyJDEa68ylsTznp8VqpF2Ek7NvwSgbsaUDLksagmEN_dcu_zLQ9v6fBg1qd-Q"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-black text-primary truncate">ระบบฝึกงาน</h1>
+<p class="font-metadata text-metadata text-on-surface-variant truncate">มหาวิทยาลัย</p>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-xl px-4 py-3 hover:bg-surface-container-highest transition-all active:scale-[0.97] transition-transform" href="#">
+<span class="material-symbols-outlined fill" data-icon="home" data-weight="fill">home</span>
+<span class="font-label-md text-label-md">หน้าหลัก</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high px-4 py-3 rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.97] transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="fingerprint">fingerprint</span>
+<span class="font-label-md text-label-md">ลงเวลา</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high px-4 py-3 rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.97] transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-md text-label-md">บันทึกประจำวัน</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high px-4 py-3 rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.97] transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-label-md text-label-md">การแจ้งเตือน</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high px-4 py-3 rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.97] transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">โปรไฟล์</span>
+</a>
+</div>
+<!-- CTA -->
+<div class="mt-auto">
+<button class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-secondary text-on-primary rounded-xl px-4 py-4 font-label-md text-label-md shadow-md active:scale-[0.97] transition-transform hover:opacity-90">
+<span class="material-symbols-outlined" data-icon="where_to_vote">where_to_vote</span>
+                    เช็คอินเข้างาน
+                </button>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col lg:ml-sidebar-width min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full lg:w-[calc(100%-280px)] z-30 bg-surface-bright/80 dark:bg-bg-dark/80 backdrop-blur-md shadow-sm">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full">
+<div class="font-display-metrics text-display-metrics font-bold text-primary dark:text-primary-fixed-dim lg:hidden text-2xl">
+                    IMS THAI
+                </div>
+<!-- Spacer for desktop -->
+<div class="hidden lg:block flex-1"></div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-100 relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2.5 h-2.5 bg-status-error rounded-full"></span>
+</button>
+<button class="w-9 h-9 rounded-full overflow-hidden hover:opacity-90 active:scale-95 duration-100 border-2 border-primary-container">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A professional headshot of a young Thai male student in a neat white shirt, looking optimistic and confident, with a clean light grey background, suitable for a corporate dashboard avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAGb7SnGtLOd8B7pPCRAyTGrEN8peKUxkAXQ9ehJ-8CWTnSu21H23ghwhKLw-O3e3vzdUk6lNbt9_qVCip9_aGzNEqO_W1gHThrpOYnolDo_624VrerSpZ3UBVHi4iya87xIFkdEK0WBKjAPNyStC3sVys6wGpbcOm2iY3w21fRm0n9dKZoY6d8H_VnSWT1PtCwNbOLEXgKjl81GYYtjnI6UxjoL04XZI0bejII4t5zB28WDpx5_eMgg"/>
+</button>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop mt-16 pb-32 lg:pb-margin-desktop overflow-y-auto">
+<!-- Welcome Banner -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft mb-8 flex flex-col md:flex-row items-center justify-between border border-surface-variant">
+<div class="mb-4 md:mb-0">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">สวัสดี สมชาย 👋</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">วันนี้คุณพร้อมฝึกงานหรือยัง?</p>
+</div>
+<div class="hidden md:block w-48 h-32 opacity-80">
+<!-- Minimal illustration placeholder -->
+<img class="w-full h-full object-contain" data-alt="A stylized, flat design 3D-like illustration of a modern open planner or calendar floating beside a cup of coffee and a pencil, set against a pristine white background with subtle indigo drop shadows, evoking a productive morning mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_VAXg-hZ7tKvAQjJsYgRjs59CMlwltggmtbjyygk6OMYwvDXINTftoHW-S9ZepfOpMazdj1vHlVUz46CPXK4npcYnpkSFqbYmrfXFefFFcMYO1hxQvulz8KNC5dX9M4EUJkTnKAjbqTAGUrh4FySq_LgwJe6b1OMVnTwk7Fe05UciaQld7Ej5rge_yNuVoj4q0oMStce0SOiMcjF4ELZaY0lYDiNzKgDH5kSwEns4aDV4zQxMX724aA"/>
+</div>
+</div>
+<!-- Main Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+<!-- Left Column (Stats & Journey) -->
+<div class="xl:col-span-2 flex flex-col gap-6">
+<!-- Stats Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-soft border border-surface-variant flex flex-col items-center justify-center text-center">
+<div class="relative w-16 h-16 mb-2">
+<svg class="w-full h-full" viewbox="0 0 36 36">
+<path class="text-surface-variant" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="75, 100" stroke-width="3"></path>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-label-md text-label-md font-bold text-primary">75%</div>
+</div>
+<span class="font-metadata text-metadata text-on-surface-variant">ชั่วโมงรวม</span>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-soft border border-surface-variant flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-4xl text-status-success mb-2" data-icon="check_circle">check_circle</span>
+<div class="font-headline-md text-headline-md text-on-surface font-bold">42</div>
+<span class="font-metadata text-metadata text-on-surface-variant">เข้างาน (วัน)</span>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-soft border border-surface-variant flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-4xl text-status-warning mb-2" data-icon="star">star</span>
+<div class="font-headline-md text-headline-md text-on-surface font-bold">A-</div>
+<span class="font-metadata text-metadata text-on-surface-variant">คะแนนประเมิน</span>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-soft border border-surface-variant flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-4xl text-tertiary-container mb-2" data-icon="local_fire_department">local_fire_department</span>
+<div class="font-headline-md text-headline-md text-on-surface font-bold">12</div>
+<span class="font-metadata text-metadata text-on-surface-variant">Streak (วัน)</span>
+</div>
+</div>
+<!-- Journey Stepper -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-surface-variant">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6">เส้นทางการฝึกงาน</h3>
+<div class="relative flex justify-between items-center w-full">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-variant -z-10"></div>
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-[60%] h-1 bg-primary -z-10"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">1</div>
+<span class="font-metadata text-metadata text-on-surface-variant hidden md:block">ปฐมนิเทศ</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">2</div>
+<span class="font-metadata text-metadata text-on-surface-variant hidden md:block">เดือนที่ 1</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">3</div>
+<span class="font-metadata text-metadata text-on-surface-variant hidden md:block">ประเมินกลางภาค</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold border-2 border-surface-container-lowest">4</div>
+<span class="font-metadata text-metadata text-on-surface-variant hidden md:block">นำเสนอโครงงาน</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column (History & Tasks) -->
+<div class="flex flex-col gap-6">
+<!-- Quick Log -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-surface-variant flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">บันทึกงานประจำวัน</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 text-sm">วันนี้คุณได้เรียนรู้อะไรบ้าง? บันทึกประสบการณ์ของคุณเพื่อเก็บเป็น Portfolio</p>
+<button class="mt-auto w-full flex items-center justify-center gap-2 bg-secondary-container text-on-secondary-container rounded-xl px-4 py-3 font-label-md text-label-md hover:bg-surface-tint hover:text-on-primary transition-colors active:scale-[0.97]">
+<span class="material-symbols-outlined" data-icon="edit_document">edit_document</span>
+                            เขียนบันทึกวันนี้
+                        </button>
+</div>
+<!-- Attendance History -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-surface-variant">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">ประวัติการลงเวลาล่าสุด</h3>
+<button class="text-primary text-sm font-label-md">ดูทั้งหมด</button>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-4 p-3 rounded-lg hover:bg-surface-container-low transition-colors border border-transparent hover:border-surface-variant">
+<div class="w-10 h-10 rounded-full bg-status-success/10 flex items-center justify-center text-status-success">
+<span class="material-symbols-outlined" data-icon="login">login</span>
+</div>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-on-surface">เข้างาน</div>
+<div class="font-metadata text-metadata text-on-surface-variant">วันนี้, 08:45 น.</div>
+</div>
+<span class="px-2 py-1 rounded-full bg-status-success/10 text-status-success text-xs font-bold">สำเร็จ</span>
+</div>
+<div class="flex items-center gap-4 p-3 rounded-lg hover:bg-surface-container-low transition-colors border border-transparent hover:border-surface-variant">
+<div class="w-10 h-10 rounded-full bg-outline-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</div>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-on-surface">ออกงาน</div>
+<div class="font-metadata text-metadata text-on-surface-variant">เมื่อวาน, 17:30 น.</div>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 rounded-lg hover:bg-surface-container-low transition-colors border border-transparent hover:border-surface-variant">
+<div class="w-10 h-10 rounded-full bg-status-success/10 flex items-center justify-center text-status-success">
+<span class="material-symbols-outlined" data-icon="login">login</span>
+</div>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-on-surface">เข้างาน</div>
+<div class="font-metadata text-metadata text-on-surface-variant">เมื่อวาน, 08:50 น.</div>
+</div>
+<span class="px-2 py-1 rounded-full bg-status-success/10 text-status-success text-xs font-bold">สำเร็จ</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
