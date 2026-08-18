@@ -20,7 +20,7 @@ error_reporting(E_ALL);
 $appEnv = getenv('APP_ENV') ?: 'local';
 ini_set('display_errors', $appEnv === 'production' ? '0' : '1');
 ini_set('log_errors', '1');
-$logDir = __DIR__ . '/../storage/logs';
+$logDir = __DIR__ . '/storage/logs';
 if (!is_dir($logDir)) {
     mkdir($logDir, 0755, true);
 }
@@ -56,7 +56,7 @@ spl_autoload_register(function (string $class): void {
         return;
     }
     $relative = substr($class, strlen($prefix));
-    $path = __DIR__ . '/../app/' . str_replace('\\', '/', $relative) . '.php';
+    $path = __DIR__ . '/app/' . str_replace('\\', '/', $relative) . '.php';
     if (is_file($path)) {
         require $path;
     }
@@ -68,9 +68,9 @@ use App\Support\View;
 
 Session::start();
 
-$routes = require __DIR__ . '/../config/routes.php';
-$actions = require __DIR__ . '/../config/actions.php';
-$viewData = require __DIR__ . '/../config/view_data.php';
+$routes = require __DIR__ . '/config/routes.php';
+$actions = require __DIR__ . '/config/actions.php';
+$viewData = require __DIR__ . '/config/view_data.php';
 
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
@@ -195,7 +195,7 @@ if ($definition[0] === 'redirect') {
 
 [$viewName, $role, $activeNav, $pageTitle] = $definition;
 
-if (!is_file(__DIR__ . '/../app/Views/' . $viewName . '.php')) {
+if (!is_file(__DIR__ . '/app/Views/' . $viewName . '.php')) {
     http_response_code(500);
     echo 'Missing view file: ' . htmlspecialchars($viewName);
     exit;
