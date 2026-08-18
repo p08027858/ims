@@ -12,13 +12,12 @@
 declare(strict_types=1);
 error_reporting(E_ALL);
 
-$baseDir = dirname(__DIR__);
+// กำหนด Base Directory ให้ถูกต้องไม่ว่าจะรันจากระดับโฟลเดอร์ใด
+$baseDir = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
+if (!is_dir($baseDir . '/app') && is_dir('/app')) {
+    $baseDir = '/app';
+}
 
-// SECURITY.md §3 "Security Misconfiguration" / DEPLOYMENT.md §8 Go-Live checklist: never leak
-// stack traces/paths to visitors in production. `APP_ENV` defaults to 'local' (DEPLOYMENT.md §4's
-// documented env var) so local dev/testing keeps seeing errors on-screen exactly as before —
-// only a real `APP_ENV=production` in the server's environment turns display off. Errors are
-// always logged to a file regardless of environment (the checklist's other half).
 $appEnv = getenv('APP_ENV') ?: 'local';
 ini_set('display_errors', $appEnv === 'production' ? '0' : '1');
 ini_set('log_errors', '1');
@@ -28,9 +27,7 @@ if (!is_dir($logDir)) {
 }
 ini_set('error_log', $logDir . '/app.log');
 
-// SECURITY.md §3 / TC-SEC-TEST-001 (Phase 12): any uncaught exception (e.g. an upstream
-// PostgREST/Supabase failure) must never reach the visitor as a raw PHP fatal error with a
-// stack trace and file paths.
+// Uncaught Exception Handler
 set_exception_handler(function (\Throwable $e) use ($appEnv): void {
     error_log('Uncaught ' . get_class($e) . ': ' . $e->getMessage() . "\n" . $e->getTraceAsString());
     if (!headers_sent()) {
@@ -45,9 +42,21 @@ set_exception_handler(function (\Throwable $e) use ($appEnv): void {
          '<h1>500 — เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง</h1><p><a href="/login">กลับไปหน้าเข้าสู่ระบบ</a></p></body></html>';
 });
 
-// ATTENDANCE_GPS.md §7: Asia/Bangkok (+07:00)
 date_default_timezone_set('Asia/Bangkok');
 
+// โหลดคลาสหลักโดยตรงทันทีเพื่อป้องกัน Autoload พลาด
+$coreFiles = [
+    $baseDir . '/app/Support/Session.php',
+    $baseDir . '/app/Support/View.php',
+    $baseDir . '/app/Middleware/AuthGuard.php',
+];
+foreach ($coreFiles as $coreFile) {
+    if (file_exists($coreFile)) {
+        require_once $coreFile;
+    }
+}
+
+// Autoloader สำหรับ Class อื่นๆ ทั้งหมด
 spl_autoload_register(function (string $class) use ($baseDir): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {
@@ -72,7 +81,6 @@ spl_autoload_register(function (string $class) use ($baseDir): void {
         }
     }
 
-    // Fallback: ค้นหาทุกโฟลเดอร์ย่อยใน app แบบไม่สนตัวพิมพ์เล็ก-ใหญ่
     if (is_dir($appDir)) {
         $targetFile = strtolower(basename($relPath)) . '.php';
         $iterator = new RecursiveIteratorIterator(
@@ -104,9 +112,6 @@ if ($requestPath === '') {
     $requestPath = '/';
 }
 
-/**
- * Match either an exact path or a `{id}`-style dynamic segment
- */
 function matchPath(string $pattern, string $requestPath): ?array
 {
     if ($pattern === $requestPath) {
@@ -127,9 +132,7 @@ function matchPath(string $pattern, string $requestPath): ?array
     return array_combine($paramNames, $matches);
 }
 
-// ---------------------------------------------------------------------------
-// 1. Actions (POST forms, and the GET /logout link)
-// ---------------------------------------------------------------------------
+// 1. Actions
 foreach ($actions as [$method, $pattern, $handler, $requiredRole]) {
     if ($method !== $requestMethod) {
         continue;
@@ -169,10 +172,7 @@ if ($requestMethod !== 'GET') {
     exit;
 }
 
-// ---------------------------------------------------------------------------
 // 2. GET view routes
-// ---------------------------------------------------------------------------
-
 function matchRoute(string $requestPath, array $routes): ?array
 {
     if (isset($routes[$requestPath])) {
@@ -206,7 +206,12 @@ if ($definition[0] === 'redirect') {
 
 [$viewName, $role, $activeNav, $pageTitle] = $definition;
 
-if (!is_file($baseDir . '/app/Views/' . $viewName . '.php') && !is_file($baseDir . '/app/views/' . $viewName . '.php')) {
+$viewFile = $baseDir . '/app/Views/' . $viewName . '.php';
+if (!is_file($viewFile)) {
+    $viewFile = $baseDir . '/app/views/' . $viewName . '.php';
+}
+
+if (!is_file($viewFile)) {
     http_response_code(500);
     echo 'Missing view file: ' . htmlspecialchars($viewName);
     exit;
