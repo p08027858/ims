@@ -12,6 +12,8 @@
 declare(strict_types=1);
 error_reporting(E_ALL);
 
+$baseDir = dirname(__DIR__);
+
 // SECURITY.md §3 "Security Misconfiguration" / DEPLOYMENT.md §8 Go-Live checklist: never leak
 // stack traces/paths to visitors in production. `APP_ENV` defaults to 'local' (DEPLOYMENT.md §4's
 // documented env var) so local dev/testing keeps seeing errors on-screen exactly as before —
@@ -20,17 +22,15 @@ error_reporting(E_ALL);
 $appEnv = getenv('APP_ENV') ?: 'local';
 ini_set('display_errors', $appEnv === 'production' ? '0' : '1');
 ini_set('log_errors', '1');
-$logDir = __DIR__ . '/storage/logs';
+$logDir = $baseDir . '/storage/logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
+    @mkdir($logDir, 0755, true);
 }
 ini_set('error_log', $logDir . '/app.log');
 
 // SECURITY.md §3 / TC-SEC-TEST-001 (Phase 12): any uncaught exception (e.g. an upstream
 // PostgREST/Supabase failure) must never reach the visitor as a raw PHP fatal error with a
-// stack trace and file paths — found live during injection testing when a crafted search
-// string tripped Supabase's edge layer into a 403 and the resulting SupabaseException went
-// uncaught. Logged in full regardless of environment; only the on-screen detail is gated.
+// stack trace and file paths.
 set_exception_handler(function (\Throwable $e) use ($appEnv): void {
     error_log('Uncaught ' . get_class($e) . ': ' . $e->getMessage() . "\n" . $e->getTraceAsString());
     if (!headers_sent()) {
@@ -45,18 +45,16 @@ set_exception_handler(function (\Throwable $e) use ($appEnv): void {
          '<h1>500 — เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง</h1><p><a href="/login">กลับไปหน้าเข้าสู่ระบบ</a></p></body></html>';
 });
 
-// ATTENDANCE_GPS.md §7: every timestamp the system records/compares (check_in_at, work_date,
-// the on_time/late cutoff) must use Asia/Bangkok, not the server's/PHP's default (UTC) — found
-// live during Phase 5 testing when check_in_at came back with a +00:00 offset instead of +07:00.
+// ATTENDANCE_GPS.md §7: Asia/Bangkok (+07:00)
 date_default_timezone_set('Asia/Bangkok');
 
-spl_autoload_register(function (string $class): void {
+spl_autoload_register(function (string $class) use ($baseDir): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {
         return;
     }
     $relative = substr($class, strlen($prefix));
-    $path = __DIR__ . '/app/' . str_replace('\\', '/', $relative) . '.php';
+    $path = $baseDir . '/app/' . str_replace('\\', '/', $relative) . '.php';
     if (is_file($path)) {
         require $path;
     }
@@ -68,9 +66,9 @@ use App\Support\View;
 
 Session::start();
 
-$routes = require __DIR__ . '/config/routes.php';
-$actions = require __DIR__ . '/config/actions.php';
-$viewData = require __DIR__ . '/config/view_data.php';
+$routes = require $baseDir . '/config/routes.php';
+$actions = require $baseDir . '/config/actions.php';
+$viewData = require $baseDir . '/config/view_data.php';
 
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
@@ -80,11 +78,7 @@ if ($requestPath === '') {
 }
 
 /**
- * Match either an exact path or a `{id}`-style dynamic segment, shared by both the GET view
- * routes and the action table below (Phase 3 needs dynamic segments for POST actions too,
- * e.g. /admin/companies/{id}/approve — routes.php's matchRoute() used to be the only caller).
- *
- * @return array<string,string>|null Captured `{name}` segments keyed by name, or null if no match.
+ * Match either an exact path or a `{id}`-style dynamic segment
  */
 function matchPath(string $pattern, string $requestPath): ?array
 {
@@ -107,10 +101,7 @@ function matchPath(string $pattern, string $requestPath): ?array
 }
 
 // ---------------------------------------------------------------------------
-// 1. Actions (POST forms, and the GET /logout link) — checked before view routes.
-// Each row's 4th element is the required role ('guest'/null = no auth check, matches
-// AuthGuard::requireRole()'s exact-role semantics for everything else) since these mutate
-// data and must be gated exactly like the GET admin/company pages that link to them.
+// 1. Actions (POST forms, and the GET /logout link)
 // ---------------------------------------------------------------------------
 foreach ($actions as [$method, $pattern, $handler, $requiredRole]) {
     if ($method !== $requestMethod) {
@@ -121,13 +112,6 @@ foreach ($actions as [$method, $pattern, $handler, $requiredRole]) {
         continue;
     }
 
-    // SECURITY.md §3 CSRF — checked once here for every mutating action rather than per
-    // controller (ISSUES.md had flagged this as an accepted-for-now gap; closed for Phase 12's
-    // Go-Live checklist). GET-method actions (/logout, /notifications/{id}/read) are exempt —
-    // they're plain <a href> links, not forms, and SECURITY.md only mandates this for forms.
-    // DELETE and any JSON-bodied request (the fetch()-based endpoints: attendance checkin/out,
-    // verify-pin) get a JSON error back since their JS expects to `.json()` the response; every
-    // other (traditional form) action gets flashed back to where the request came from.
     if (in_array($requestMethod, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
         $csrfToken = (string) ($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
         if (!Session::validateCsrfToken($csrfToken)) {
@@ -145,11 +129,11 @@ foreach ($actions as [$method, $pattern, $handler, $requiredRole]) {
     }
 
     if ($requiredRole !== null) {
-        AuthGuard::requireRole($requiredRole); // 403s / redirects — never returns on failure
+        AuthGuard::requireRole($requiredRole);
     }
     [$controllerClass, $methodName] = $handler;
     (new $controllerClass())->{$methodName}($params);
-    exit; // controllers always redirect or View::render() (which itself exits)
+    exit;
 }
 
 if ($requestMethod !== 'GET') {
@@ -195,16 +179,14 @@ if ($definition[0] === 'redirect') {
 
 [$viewName, $role, $activeNav, $pageTitle] = $definition;
 
-if (!is_file(__DIR__ . '/app/Views/' . $viewName . '.php')) {
+if (!is_file($baseDir . '/app/Views/' . $viewName . '.php')) {
     http_response_code(500);
     echo 'Missing view file: ' . htmlspecialchars($viewName);
     exit;
 }
 
-AuthGuard::requireRole($role); // redirects to /login, /pending-approval, or 403s — never returns for guarded routes that fail
+AuthGuard::requireRole($role);
 
-// Phase 3+: pages wired to real Supabase data register a loader here instead of relying on
-// the view's own `$x ?? [mock...]` fallback (still in effect for every page not listed).
 $extraData = [];
 if (isset($viewData[$requestPath])) {
     [$loaderClass, $loaderMethod] = $viewData[$requestPath];
