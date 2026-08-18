@@ -56,22 +56,33 @@ spl_autoload_register(function (string $class) use ($baseDir): void {
     $relative = substr($class, strlen($prefix));
     $relPath = str_replace('\\', '/', $relative);
 
-    // ตรวจสอบพาธทั้งแบบตรงตัวพิมพ์, ตัวพิมพ์เล็กทั้งหมด, และพาธย่อยแบบตัวพิมพ์เล็ก
-    $parts = explode('/', $relPath);
-    $lowerParts = array_map('strtolower', $parts);
-    $relPathLower = implode('/', $lowerParts);
+    $appDir = is_dir($baseDir . '/app') ? $baseDir . '/app' : __DIR__ . '/../app';
 
     $candidates = [
-        $baseDir . '/app/' . $relPath . '.php',
-        $baseDir . '/app/' . $relPathLower . '.php',
-        $baseDir . '/app/' . strtolower(dirname($relPath)) . '/' . basename($relPath) . '.php',
-        $baseDir . '/app/' . dirname($relPath) . '/' . strtolower(basename($relPath)) . '.php',
+        $appDir . '/' . $relPath . '.php',
+        $appDir . '/' . strtolower($relPath) . '.php',
+        $appDir . '/' . strtolower(dirname($relPath)) . '/' . basename($relPath) . '.php',
+        $appDir . '/' . dirname($relPath) . '/' . strtolower(basename($relPath)) . '.php',
     ];
 
     foreach ($candidates as $path) {
         if (is_file($path)) {
             require_once $path;
             return;
+        }
+    }
+
+    // Fallback: ค้นหาทุกโฟลเดอร์ย่อยใน app แบบไม่สนตัวพิมพ์เล็ก-ใหญ่
+    if (is_dir($appDir)) {
+        $targetFile = strtolower(basename($relPath)) . '.php';
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($appDir, RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $file) {
+            if ($file->isFile() && strtolower($file->getFilename()) === $targetFile) {
+                require_once $file->getPathname();
+                return;
+            }
         }
     }
 });
