@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'url' => getenv('SUPABASE_URL') ?: '',
-    'anon_key' => getenv('SUPABASE_ANON_KEY') ?: '',
-    'service_role_key' => getenv('SUPABASE_SERVICE_ROLE_KEY') ?: '',
+    'url' => $_ENV['SUPABASE_URL'] ?? getenv('SUPABASE_URL') ?: '',
+    'anon_key' => $_ENV['SUPABASE_ANON_KEY'] ?? getenv('SUPABASE_ANON_KEY') ?: '',
+    'service_role_key' => $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('SUPABASE_SERVICE_ROLE_KEY') ?: '',
 ];
