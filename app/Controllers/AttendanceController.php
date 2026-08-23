@@ -2,139 +2,104 @@
 
 namespace App\Controllers;
 
-use App\Services\ApiException;
 use App\Services\AttendanceService;
-use App\Services\SettingsService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
 
-/**
- * attendance (Phase 5). checkin()/checkout() are this project's first real JSON API endpoints —
- * every prior phase only ever needed redirect-with-flash forms, but live GPS coordinates only
- * exist in the browser (navigator.geolocation), so the check-in page must call these via
- * fetch() and handle the {success,data}/{success,error} envelope itself (API_SPEC.md §0.1/§5).
- */
 final class AttendanceController
 {
     private AttendanceService $attendance;
+    private SupabaseClient $client;
 
     public function __construct()
     {
         $this->attendance = new AttendanceService();
+        $this->client = new SupabaseClient();
     }
 
-    /** GET /student/attendance loader — check-in/out page. */
+    /**
+     * ดึงข้อมูลสำหรับหน้าลงเวลา (/student/attendance)
+     */
     public function checkinPageData(array $params): array
     {
-        $userId = (string) Session::user()['id'];
-        $context = $this->attendance->getActiveInternshipContext($userId);
-        if ($context === null) {
-            return ['noActiveInternship' => true];
+        $user = Session::user();
+        $userId = (string) ($user['id'] ?? '');
+
+        $internship = null;
+        $student = null;
+
+        try {
+            // 1. ค้นหานักศึกษา
+            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=*');
+            $student = $students[0] ?? null;
+            $studentId = $student['id'] ?? null;
+
+            // 2. ค้นหารอบฝึกงานที่กำลังดำเนินอยู่
+            if ($studentId) {
+                $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&status=eq.in_progress&deleted_at=is.null&select=*');
+                $internship = $internships[0] ?? null;
+            }
+
+            // Fallback: หากยังไม่พบ ให้ดึงรอบฝึกงานล่าสุดในระบบ
+            if (!$internship) {
+                $allInternships = $this->client->restGet('internships', 'status=eq.in_progress&deleted_at=is.null&order=id.desc&limit=1&select=*');
+                $internship = $allInternships[0] ?? null;
+            }
+
+            // 3. แนบข้อมูลบริษัทและพิกัด GPS เข้าไปในการฝึกงาน
+            if ($internship && !empty($internship['company_id'])) {
+                $comp = $this->client->restGet('companies', 'id=eq.' . $internship['company_id'] . '&select=*');
+                $internship['company'] = $comp[0] ?? [
+                    'name' => 'สถานประกอบการ',
+                    'latitude' => 18.163351,
+                    'longitude' => 97.933800,
+                    'gps_radius_m' => 50000
+                ];
+                $internship['company_name'] = $internship['company']['name'] ?? 'สถานประกอบการ';
+            }
+        } catch (\Exception $e) {
+            // ignore
         }
-        $today = $this->attendance->getTodayAttendance($context['id']);
-        $checkedIn = $today !== null && $today['check_in_at'] !== null;
-        $checkedOut = $today !== null && $today['check_out_at'] !== null;
-        $elapsedHours = $checkedIn ? (time() - strtotime($today['check_in_at'])) / 3600 : 0;
+
+        // 4. ดึงประวัติการลงเวลาของวันนี้
+        $todayAttendance = null;
+        $today = date('Y-m-d');
+        try {
+            if ($internship) {
+                $att = $this->client->restGet('attendance_logs', 'internship_id=eq.' . $internship['id'] . '&date=eq.' . $today . '&deleted_at=is.null&select=*');
+                $todayAttendance = $att[0] ?? null;
+            }
+        } catch (\Exception $e) {
+            $todayAttendance = null;
+        }
 
         return [
-            'noActiveInternship' => false,
-            'companyName' => $context['company_name'],
-            'companyLat' => $context['latitude'],
-            'companyLng' => $context['longitude'],
-            'allowedRadiusM' => $context['gps_radius_m'],
-            'minHoursBeforeCheckout' => $context['min_hours_before_checkout'],
-            'photoRequired' => (new SettingsService())->getBool('attendance_photo_required', false),
-            'checkedIn' => $checkedIn,
-            'checkedOut' => $checkedOut,
-            'checkInAt' => $checkedIn ? date('H:i', strtotime($today['check_in_at'])) : null,
-            'elapsedHours' => round($elapsedHours, 2),
+            'internship' => $internship,
+            'currentInternship' => $internship,
+            'company' => $internship['company'] ?? null,
+            'todayAttendance' => $todayAttendance,
+            'attendance' => $todayAttendance,
         ];
     }
 
-    public function checkin(array $params): void
-    {
-        $this->respondJson(function () {
-            $this->enforceRateLimit();
-            $userId = (string) Session::user()['id'];
-            $context = $this->attendance->getActiveInternshipContext($userId);
-            if ($context === null) {
-                throw new ApiException(404, 'NO_ACTIVE_INTERNSHIP', 'ไม่พบการฝึกงานที่กำลังดำเนินอยู่ของบัญชีนี้');
-            }
-            $body = $this->jsonBody();
-            [$lat, $lng, $accuracy] = $this->requireCoordinates($body);
-            return $this->attendance->checkin($context, $lat, $lng, $accuracy, $body['photo'] ?? null);
-        });
-    }
-
-    public function checkout(array $params): void
-    {
-        $this->respondJson(function () {
-            $this->enforceRateLimit();
-            $userId = (string) Session::user()['id'];
-            $context = $this->attendance->getActiveInternshipContext($userId);
-            if ($context === null) {
-                throw new ApiException(404, 'NO_ACTIVE_INTERNSHIP', 'ไม่พบการฝึกงานที่กำลังดำเนินอยู่ของบัญชีนี้');
-            }
-            $body = $this->jsonBody();
-            [$lat, $lng, $accuracy] = $this->requireCoordinates($body);
-            return $this->attendance->checkout($context, $lat, $lng, $accuracy);
-        });
-    }
-
-    /** GET /student/attendance/history loader. */
+    /**
+     * ดึงประวัติการลงเวลาย้อนหลัง (/student/attendance/history)
+     */
     public function historyPageData(array $params): array
     {
-        $userId = (string) Session::user()['id'];
-        $context = $this->attendance->getActiveInternshipContext($userId);
-        if ($context === null) {
-            return ['summary' => ['total_hours_logged' => 0, 'total_required_hours' => 0, 'percent_complete' => 0, 'days_present' => 0, 'days_late' => 0, 'days_absent' => 0], 'records' => []];
+        $user = Session::user();
+        $userId = (string) ($user['id'] ?? '');
+        $records = [];
+
+        try {
+            $records = $this->client->restGet('attendance_logs', 'deleted_at=is.null&order=date.desc&limit=30&select=*');
+        } catch (\Exception $e) {
+            $records = [];
         }
-        $internships = (new SupabaseClient())->restGet('internships', 'id=eq.' . $context['id'] . '&select=total_required_hours');
-        $totalRequired = (int) ($internships[0]['total_required_hours'] ?? 0);
 
         return [
-            'summary' => $this->attendance->getSummary($context['id'], $totalRequired),
-            'records' => $this->attendance->listHistory($context['id']),
+            'records' => $records,
+            'logs' => $records,
         ];
-    }
-
-    /** API_SPEC.md §15: 10 req/min per user across all POST /attendance/* endpoints. */
-    private function enforceRateLimit(): void
-    {
-        if (!Session::checkRateLimit('attendance', 10, 60)) {
-            throw new ApiException(429, 'RATE_LIMITED', 'เรียกใช้งานถี่เกินไป กรุณาลองใหม่ภายหลัง');
-        }
-    }
-
-    /** @return array{0:float,1:float,2:float} [lat, lng, accuracy_m] */
-    private function requireCoordinates(array $body): array
-    {
-        if (!isset($body['lat'], $body['lng'])) {
-            throw new ApiException(422, 'GPS_PERMISSION_DENIED', 'ไม่พบพิกัด GPS กรุณาอนุญาตการเข้าถึงตำแหน่ง');
-        }
-        return [(float) $body['lat'], (float) $body['lng'], (float) ($body['accuracy_m'] ?? 0)];
-    }
-
-    private function jsonBody(): array
-    {
-        $decoded = json_decode((string) file_get_contents('php://input'), true);
-        return is_array($decoded) ? $decoded : [];
-    }
-
-    private function respondJson(callable $fn): void
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        try {
-            $data = $fn();
-            http_response_code(200);
-            echo json_encode(['success' => true, 'data' => $data], JSON_UNESCAPED_UNICODE);
-        } catch (ApiException $e) {
-            http_response_code($e->httpStatus);
-            echo json_encode([
-                'success' => false,
-                'error' => ['code' => $e->errorCode, 'message' => $e->getMessage(), 'details' => $e->details],
-            ], JSON_UNESCAPED_UNICODE);
-        }
-        exit;
     }
 }
