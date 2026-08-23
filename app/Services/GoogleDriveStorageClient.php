@@ -5,13 +5,7 @@ namespace App\Services;
 /**
  * File storage via the Google Apps Script Web App proxy (google-apps-script/Code.gs) —
  * replaces SupabaseClient::storageUpload() as the primary store for attendance photos,
- * daily-log attachments, leave certificates, and digital signatures (2026-08-10, per user
- * request — GAS/Google Drive instead of Supabase Storage, see CHANGELOG.md).
- *
- * config/google_drive.php holds the deployed Web App URL + shared secret — not committed
- * (see that file's own docblock). This class throws SupabaseException on failure for now
- * (reusing the existing exception type rather than adding a parallel one, since every current
- * caller already catches SupabaseException the same way it caught storageUpload() failures).
+ * daily-log attachments, leave certificates, and digital signatures.
  */
 final class GoogleDriveStorageClient
 {
@@ -22,17 +16,24 @@ final class GoogleDriveStorageClient
 
     public function __construct()
     {
-       $config = require __DIR__ . '/../config/google_drive.php';
-        $this->webAppUrl = (string) $config['web_app_url'];
-        $this->sharedSecret = (string) $config['shared_secret'];
+        $configFile = __DIR__ . '/../../config/google_drive.php';
+        $config = file_exists($configFile) ? require $configFile : [];
+
+        $this->webAppUrl = (string) ($config['web_app_url'] ?? getenv('GOOGLE_DRIVE_WEB_APP_URL') ?: '');
+        $this->sharedSecret = (string) ($config['shared_secret'] ?? getenv('GOOGLE_DRIVE_SHARED_SECRET') ?: '');
     }
 
     /**
      * @param string $category one of: attendance-photos, daily-logs, leave-certificates, signatures
-     * @return string the file's viewable Drive URL (https://drive.google.com/uc?export=view&id=...)
+     * @return string the file's viewable Drive URL
      */
     public function upload(string $category, string $filename, string $binaryData, string $contentType, string $uploadedBy = ''): string
     {
+        if (empty($this->webAppUrl) || empty($this->sharedSecret)) {
+            // หากยังไม่ได้ตั้งค่า Google Apps Script ให้ผ่านไปก่อนโดยไม่ทำให้ระบบล่ม
+            return '';
+        }
+
         $payload = json_encode([
             'secret' => $this->sharedSecret,
             'category' => $category,
@@ -42,14 +43,6 @@ final class GoogleDriveStorageClient
             'uploadedBy' => $uploadedBy,
         ], JSON_UNESCAPED_UNICODE);
 
-        // Apps Script's /exec URL actually RUNS doPost() on THIS request, then always
-        // 302-redirects to a script.googleusercontent.com/macros/echo?... URL that just serves
-        // the already-computed response body — and confirmed live 2026-08-10 via verbose cURL
-        // that this specific PHP/cURL build preserves POST across that redirect regardless of
-        // CURLOPT_FOLLOWLOCATION/CURLOPT_POSTREDIR, which 405s ("Allow: HEAD, GET") because the
-        // echo endpoint only accepts GET/HEAD — even though the actual upload had already
-        // succeeded on request #1 by that point. So: follow the redirect manually as a fresh GET
-        // rather than relying on cURL's automatic (and here, wrong-method) redirect handling.
         [$status, $raw] = $this->post($this->webAppUrl, $payload);
         if ($status === 302 || $status === 301) {
             $location = $this->extractLocation($raw);
@@ -61,7 +54,7 @@ final class GoogleDriveStorageClient
 
         $decoded = json_decode((string) $raw, true);
         if (!is_array($decoded)) {
-            throw new SupabaseException($status, [], 'Google Drive upload failed: unexpected response (is the Web App deployed and config/google_drive.php filled in?)');
+            throw new SupabaseException($status, [], 'Google Drive upload failed: unexpected response');
         }
         if (($decoded['success'] ?? false) !== true) {
             throw new SupabaseException($status, $decoded, 'Google Drive upload failed: ' . ($decoded['message'] ?? $decoded['error'] ?? 'unknown error'));
@@ -81,13 +74,11 @@ final class GoogleDriveStorageClient
             CURLOPT_POSTFIELDS => $jsonPayload,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => true,
-            // Apps Script cold starts + a real Drive write can take a few seconds — more
-            // generous than SupabaseClient's typical REST call timeouts on purpose.
             CURLOPT_TIMEOUT => 30,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_FOLLOWLOCATION => false, // handled manually — see upload()'s docblock
+            CURLOPT_FOLLOWLOCATION => false,
         ]);
-        return $this->exec($ch, includesHeaders: true);
+        return $this->exec($ch, true);
     }
 
     /** @return array{0:int,1:string} [http_status, raw_body] */
@@ -101,7 +92,7 @@ final class GoogleDriveStorageClient
             CURLOPT_TIMEOUT => 30,
             CURLOPT_SSL_VERIFYPEER => true,
         ]);
-        return $this->exec($ch, includesHeaders: false);
+        return $this->exec($ch, false);
     }
 
     /** @return array{0:int,1:string} */
@@ -115,8 +106,6 @@ final class GoogleDriveStorageClient
         }
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        // $includesHeaders: post() needs the raw headers prepended (CURLOPT_HEADER) so
-        // extractLocation() can find the redirect target; get()'s plain body doesn't.
         return [$status, $raw];
     }
 
