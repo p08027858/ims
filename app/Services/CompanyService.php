@@ -3,7 +3,7 @@
 namespace App\Services;
 
 /**
- * Companies + company_supervisors service with student search support.
+ * Companies + company_supervisors Service (Fully unified for Admin & Student Views)
  */
 final class CompanyService
 {
@@ -15,75 +15,90 @@ final class CompanyService
     }
 
     /**
-     * ค้นหารายชื่อสถานประกอบการสำหรับหน้านักศึกษา (/student/companies)
+     * ดึงรายชื่อสถานประกอบการสำหรับ Directory ทุกรูปแบบ
      */
-    public function searchCompaniesForStudent(string $query = '', string $province = '', string $industryType = ''): array
+    public function listCompanies(?string $q = null, ?string $province = null, ?string $industry = null): array
     {
-        $filters = ['deleted_at=is.null', 'status=eq.active'];
+        $filters = ['deleted_at=is.null'];
 
         if (!empty($province) && $province !== 'ทั้งหมด') {
             $filters[] = 'province=eq.' . urlencode($province);
         }
 
-        if (!empty($industryType) && $industryType !== 'ทั้งหมด') {
-            $filters[] = 'business_type=eq.' . urlencode($industryType);
+        if (!empty($industry) && $industry !== 'ทั้งหมด') {
+            $filters[] = 'business_type=eq.' . urlencode($industry);
         }
 
-        if (!empty($query)) {
-            $filters[] = 'or=(name.ilike.*' . urlencode($query) . '*,description.ilike.*' . urlencode($query) . '*)';
+        if (!empty($q)) {
+            $filters[] = 'or=(name.ilike.*' . urlencode($q) . '*,address.ilike.*' . urlencode($q) . '*)';
         }
 
         $queryString = implode('&', $filters) . '&select=*&order=name.asc';
         
         try {
-            $companies = $this->client->restGet('companies', $queryString);
-        } catch (SupabaseException) {
-            $companies = [];
+            $rows = $this->client->restGet('companies', $queryString);
+        } catch (\Exception) {
+            $rows = [];
         }
 
-        // เสริมข้อมูลตำแหน่งงาน (Jobs) ให้แต่ละบริษัท
-        foreach ($companies as &$company) {
+        if (empty($rows)) {
             try {
-                $jobs = $this->client->restGet('company_job_postings', 'company_id=eq.' . $company['id'] . '&deleted_at=is.null&status=eq.open&select=*');
-                $company['jobs'] = $jobs;
-                $company['available_positions'] = count($jobs);
+                $rows = $this->client->restGet('companies', 'select=*&order=name.asc');
             } catch (\Exception) {
-                $company['jobs'] = [];
-                $company['available_positions'] = 0;
+                $rows = [];
             }
         }
 
-        return $companies;
+        return $rows;
+    }
+
+    public function searchCompaniesForStudent(string $query = '', string $province = '', string $industryType = ''): array
+    {
+        return $this->listCompanies($query, $province, $industryType);
     }
 
     public function listApprovedForDirectory(): array
     {
-        return $this->searchCompaniesForStudent();
+        return $this->listCompanies();
+    }
+
+    public function listAll(): array
+    {
+        return $this->listCompanies();
+    }
+
+    public function listApproved(): array
+    {
+        return $this->listCompanies();
     }
 
     public function listPendingApprovals(): array
     {
         $items = [];
 
-        $pendingUsers = $this->client->restGet(
-            'users',
-            'status=eq.pending&role=in.(student,company,teacher)&select=id,role,email'
-        );
-        foreach ($pendingUsers as $u) {
-            [$name, $meta] = $this->resolvePendingProfile($u['role'], $u['id'], $u['email']);
-            $items[] = ['id' => $u['id'], 'type' => $u['role'], 'name' => $name, 'meta' => $meta];
-        }
-
-        $pendingCompanies = $this->client->restGet(
-            'companies',
-            'status=eq.pending&deleted_at=is.null&select=id,name,business_type,province'
-        );
-        foreach ($pendingCompanies as $c) {
-            $meta = 'สถานประกอบการ';
-            if (!empty($c['business_type'])) {
-                $meta .= ' · ' . $c['business_type'];
+        try {
+            $pendingUsers = $this->client->restGet(
+                'users',
+                'status=eq.pending&role=in.(student,company,teacher)&select=id,role,email'
+            );
+            foreach ($pendingUsers as $u) {
+                [$name, $meta] = $this->resolvePendingProfile($u['role'], $u['id'], $u['email']);
+                $items[] = ['id' => $u['id'], 'type' => $u['role'], 'name' => $name, 'meta' => $meta];
             }
-            $items[] = ['id' => $c['id'], 'type' => 'company', 'name' => $c['name'], 'meta' => $meta];
+
+            $pendingCompanies = $this->client->restGet(
+                'companies',
+                'status=eq.pending&deleted_at=is.null&select=id,name,business_type,province'
+            );
+            foreach ($pendingCompanies as $c) {
+                $meta = 'สถานประกอบการ';
+                if (!empty($c['business_type'])) {
+                    $meta .= ' · ' . $c['business_type'];
+                }
+                $items[] = ['id' => $c['id'], 'type' => 'company', 'name' => $c['name'], 'meta' => $meta];
+            }
+        } catch (\Exception) {
+            // ignore
         }
 
         return $items;
@@ -112,8 +127,8 @@ final class CompanyService
                     return [trim($rows[0]['first_name'] . ' ' . $rows[0]['last_name']), 'ครูนิเทศ · ' . ($dept[0]['name_th'] ?? '')];
                 }
             }
-        } catch (SupabaseException) {
-            // fall through to fallback
+        } catch (\Exception) {
+            // fallback
         }
         return [$email, ucfirst($role)];
     }
