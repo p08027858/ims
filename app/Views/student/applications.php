@@ -1,43 +1,65 @@
 <?php
 /**
- * Student's own application history (SITEMAP.md §2 `/student/applications`, Phase 11). New page —
- * Phase 4 only ever needed the search/detail/apply flow, never a "my applications" list. Wired to
- * App\Controllers\ApplicationController::myApplicationsData().
+ * Student Applications View
  */
-$applications = $applications ?? [
-    ['id' => 1, 'company_name' => 'บริษัท เทคโนวา จำกัด', 'position_title' => 'Frontend Developer', 'status' => 'accepted', 'applied_at' => '2026-07-01T09:00:00+07:00'],
-];
-$statusLabel = ['pending' => 'รอพิจารณา', 'accepted' => 'ตอบรับแล้ว', 'rejected' => 'ปฏิเสธ', 'cancelled' => 'ยกเลิกแล้ว'];
-$statusClass = [
-    'pending' => 'bg-status-warning/10 text-status-warning',
-    'accepted' => 'bg-status-success/10 text-status-success',
-    'rejected' => 'bg-status-error/10 text-status-error',
-    'cancelled' => 'bg-surface-variant text-on-surface-variant',
-];
+$list = $applications ?? $items ?? $myApplications ?? [];
 ?>
-<div class="flex flex-col gap-6">
-  <div>
-    <h1 class="font-headline-lg text-headline-lg text-on-surface dark:text-text-dark-mode">ใบสมัครของฉัน</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant">สถานะใบสมัครฝึกงานทั้งหมดที่เคยยื่น</p>
-  </div>
 
-  <?php if (empty($applications)): ?>
-    <div class="flex flex-col items-center justify-center py-16 text-center">
-      <span class="material-symbols-outlined text-5xl text-outline-variant mb-3">description</span>
-      <p class="font-body-md text-body-md text-on-surface-variant mb-4">ยังไม่มีใบสมัคร</p>
-      <a href="/student/companies" class="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md">ค้นหาสถานประกอบการ</a>
-    </div>
-  <?php else: ?>
-    <div class="flex flex-col gap-3">
-      <?php foreach ($applications as $a): ?>
-        <div class="bg-surface-container-lowest dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-surface-variant/50 dark:border-outline-variant/10 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 sm:justify-between">
-          <div class="min-w-0">
-            <p class="font-label-md text-label-md text-on-surface dark:text-text-dark-mode truncate"><?= htmlspecialchars($a['company_name']) ?></p>
-            <p class="font-metadata text-metadata text-on-surface-variant truncate"><?= htmlspecialchars($a['position_title']) ?> · <?= htmlspecialchars(date('j M Y', strtotime($a['applied_at']))) ?></p>
-          </div>
-          <span class="shrink-0 px-2.5 py-1 rounded-full font-label-md text-label-md <?= $statusClass[$a['status']] ?? 'bg-surface-variant text-on-surface-variant' ?>"><?= htmlspecialchars($statusLabel[$a['status']] ?? $a['status']) ?></span>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">ใบสมัครของฉัน</h1>
+            <p class="text-slate-500 text-sm mt-1">สถานะใบสมัครฝึกงานทั้งหมดที่เคยยื่น</p>
         </div>
-      <?php endforeach; ?>
+        <a href="/student/companies" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+            ค้นหาสถานประกอบการเพิ่ม
+        </a>
     </div>
-  <?php endif; ?>
+
+    <?php if (empty($list)): ?>
+        <div class="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+            <div class="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">ยังไม่มีใบสมัคร</h3>
+            <div class="mt-4">
+                <a href="/student/companies" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors inline-block">
+                    ค้นหาสถานประกอบการ
+                </a>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="space-y-4">
+            <?php foreach ($list as $app): ?>
+                <?php 
+                    $compName = $app['company']['name'] ?? $app['company_name'] ?? 'สถานประกอบการ';
+                    $pos = $app['position'] ?? 'นักศึกษาฝึกงาน';
+                    $status = $app['status'] ?? 'pending';
+                    $date = !empty($app['created_at']) ? date('d/m/Y H:i', strtotime($app['created_at'])) : '-';
+                    $notes = $app['cover_letter'] ?? $app['notes'] ?? '-';
+                ?>
+                <div class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-bold text-slate-800 text-lg"><?= htmlspecialchars($compName) ?></h3>
+                            <?php if ($status === 'approved'): ?>
+                                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full">อนุมัติแล้ว</span>
+                            <?php elseif ($status === 'rejected'): ?>
+                                <span class="px-3 py-1 bg-rose-50 text-rose-700 text-xs font-semibold rounded-full">ปฏิเสธ</span>
+                            <?php else: ?>
+                                <span class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full">รอพิจารณา</span>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-sm text-indigo-600 font-medium mt-1">ตำแหน่ง: <?= htmlspecialchars($pos) ?></p>
+                        <p class="text-xs text-slate-500 mt-2">ข้อความถึงสถานประกอบการ: <?= htmlspecialchars($notes) ?></p>
+                        <p class="text-xs text-slate-400 mt-1">วันที่ยื่น: <?= htmlspecialchars($date) ?></p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">สถานะ: รอการติดต่อกลับ</span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 </div>
