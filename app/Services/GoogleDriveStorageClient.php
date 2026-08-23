@@ -22,7 +22,7 @@ final class GoogleDriveStorageClient
 
     public function __construct()
     {
-        $config = require __DIR__ . '/../../config/google_drive.php';
+       $config = require __DIR__ . '/../config/google_drive.php';
         $this->webAppUrl = (string) $config['web_app_url'];
         $this->sharedSecret = (string) $config['shared_secret'];
     }
