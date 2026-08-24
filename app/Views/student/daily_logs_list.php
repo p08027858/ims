@@ -2,7 +2,14 @@
 /**
  * Daily Logs List View
  */
-$logs = $dailyLogs ?? $logs ?? $items ?? [];
+$client = new \App\Services\SupabaseClient();
+$logs = [];
+try {
+    // ดึงโดยเรียง id ล่าสุดขึ้นก่อนเสมอ
+    $logs = $client->restGet('daily_logs', 'deleted_at=is.null&order=id.desc&limit=50&select=*');
+} catch (\Exception $e) {
+    $logs = $dailyLogs ?? $logs ?? [];
+}
 ?>
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -43,7 +50,7 @@ $logs = $dailyLogs ?? $logs ?? $items ?? [];
             </div>
             
             <h3 class="text-base font-bold text-slate-800 mb-1 truncate"><?= htmlspecialchars($log['title'] ?? 'บันทึกงาน') ?></h3>
-            <p class="text-sm text-slate-600 line-clamp-2 leading-relaxed mb-3"><?= nl2br(htmlspecialchars($log['activity_description'] ?? '')) ?></p>
+            <p class="text-sm text-slate-600 leading-relaxed mb-3"><?= nl2br(htmlspecialchars($log['activity_description'] ?? $log['tasks_performed'] ?? '')) ?></p>
             
             <?php if (!empty($log['problems_encountered']) || !empty($log['learning_outcomes'])): ?>
               <div class="pt-3 border-t border-slate-100 flex flex-wrap gap-4 text-xs text-slate-500">

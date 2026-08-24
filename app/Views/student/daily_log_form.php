@@ -2,7 +2,7 @@
 /**
  * Daily Log Form
  */
-$today = $today ?? date('Y-m-d');
+$today = date('Y-m-d');
 $thaiDate = date('j F Y', strtotime('+543 years'));
 ?>
 
@@ -51,7 +51,7 @@ $thaiDate = date('j F Y', strtotime('+543 years'));
             <span class="material-symbols-outlined text-[24px]">add_photo_alternate</span>
           </div>
           <p class="text-sm font-medium text-indigo-600 mt-1">แตะเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-          <p class="text-xs text-slate-400">รองรับภาพถ่ายทุกชนิด (ย่อขนาดอัตโนมัติ)</p>
+          <p class="text-xs text-slate-400">รองรับภาพถ่ายทุกชนิด</p>
         </div>
 
         <div id="preview-box" class="hidden flex-col items-center gap-2">
@@ -96,7 +96,7 @@ function processImage(input) {
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 800;
+      const MAX_WIDTH = 600;
       const scaleSize = MAX_WIDTH / img.width;
       const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
       const height = (img.width > MAX_WIDTH) ? (img.height * scaleSize) : img.height;
@@ -106,7 +106,7 @@ function processImage(input) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      photoBase64 = canvas.toDataURL('image/jpeg', 0.6);
       document.getElementById('image-preview').src = photoBase64;
       document.getElementById('upload-placeholder').classList.add('hidden');
       document.getElementById('preview-box').classList.remove('hidden');
@@ -133,23 +133,46 @@ document.getElementById('daily-form').addEventListener('submit', async function(
   btn.disabled = true;
   btnText.textContent = 'กำลังบันทึกข้อมูล...';
 
+  const desc = document.getElementById('activity_description').value;
+  const title = document.getElementById('title').value;
+
   const payload = {
+    internship_id: 3,
+    student_id: 1,
     log_date: document.getElementById('log_date').value,
-    title: document.getElementById('title').value,
-    activity_description: document.getElementById('activity_description').value,
+    title: title,
+    tasks_performed: desc,
+    activity_description: desc,
     problems_encountered: document.getElementById('problems_encountered').value,
     learning_outcomes: document.getElementById('learning_outcomes').value,
-    photo_base64: photoBase64
+    photo_url: photoBase64,
+    status: 'submitted'
   };
 
   try {
-    const res = await fetch('/student/daily-logs', {
+    const res = await fetch('https://klhrxucugkyzjpufdhtj.supabase.co/rest/v1/daily_logs', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsaHJ4dWN1Z2t5empwdWZkaHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwNDAyNjEsImV4cCI6MjA1NTYxNjI2MX0.g9iK47R5b8wz1pC0cIkmF6R_q0_4aE1x47Yg2P2V6bE',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsaHJ4dWN1Z2t5empwdWZkaHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwNDAyNjEsImV4cCI6MjA1NTYxNjI2MX0.g9iK47R5b8wz1pC0cIkmF6R_q0_4aE1x47Yg2P2V6bE',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
       body: JSON.stringify(payload)
     });
-  } catch (err) {}
 
-  window.location.href = '/student/daily-logs';
+    if (res.ok) {
+      window.location.href = '/student/daily-logs';
+    } else {
+      const errData = await res.json();
+      alert('บันทึกไม่สำเร็จ: ' + (errData.message || JSON.stringify(errData)));
+      btn.disabled = false;
+      btnText.textContent = 'ส่งบันทึกนี้';
+    }
+  } catch (err) {
+    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message);
+    btn.disabled = false;
+    btnText.textContent = 'ส่งบันทึกนี้';
+  }
 });
 </script>
