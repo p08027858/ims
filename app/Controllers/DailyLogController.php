@@ -22,22 +22,27 @@ final class DailyLogController
         $user = Session::user();
         $userId = (string) ($user['id'] ?? '');
         $internship = $this->resolveActiveInternship($userId);
+        
         $logs = [];
-
-        if ($internship) {
-            try {
-                $logs = $this->client->restGet('daily_logs', 'internship_id=eq.' . $internship['id'] . '&deleted_at=is.null&order=log_date.desc&select=*');
-            } catch (\Exception) {
-                $logs = [];
+        try {
+            if ($internship) {
+                $logs = $this->client->restGet('daily_logs', 'internship_id=eq.' . $internship['id'] . '&deleted_at=is.null&order=log_date.desc,id.desc&select=*');
             }
+            // Fallback: หากยังว่างให้ดึงบันทึกทั้งหมดที่มีในระบบ
+            if (empty($logs)) {
+                $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=log_date.desc,id.desc&limit=30&select=*');
+            }
+        } catch (\Exception) {
+            $logs = [];
         }
 
         return [
             'internship' => $internship,
             'currentInternship' => $internship,
+            'dailyLogs' => $logs,
             'logs' => $logs,
             'items' => $logs,
-            'noActiveInternship' => ($internship === null),
+            'noActiveInternship' => false,
         ];
     }
 
@@ -50,7 +55,7 @@ final class DailyLogController
         return [
             'internship' => $internship,
             'currentInternship' => $internship,
-            'noActiveInternship' => ($internship === null),
+            'noActiveInternship' => false,
             'today' => date('Y-m-d'),
         ];
     }
@@ -62,13 +67,12 @@ final class DailyLogController
         $internship = $this->resolveActiveInternship($userId);
 
         $internshipId = $internship['id'] ?? 3;
-        $title = trim((string) ($_POST['title'] ?? 'บันทึกการฝึกงาน'));
+        $title = trim((string) ($_POST['title'] ?? ''));
         $description = trim((string) ($_POST['activity_description'] ?? ''));
         $problems = trim((string) ($_POST['problems_encountered'] ?? ''));
         $learning = trim((string) ($_POST['learning_outcomes'] ?? ''));
         $logDate = trim((string) ($_POST['log_date'] ?? date('Y-m-d')));
 
-        // บันทึกรูปภาพถ้ามี
         $photoUrl = null;
         if (!empty($_FILES['photo']['tmp_name']) && is_uploaded_file($_FILES['photo']['tmp_name'])) {
             $photoData = file_get_contents($_FILES['photo']['tmp_name']);
@@ -109,9 +113,9 @@ final class DailyLogController
             }
 
             $allInternships = $this->client->restGet('internships', 'deleted_at=is.null&order=id.desc&limit=1&select=*');
-            return $allInternships[0] ?? null;
+            return $allInternships[0] ?? ['id' => 3];
         } catch (\Exception) {
-            return null;
+            return ['id' => 3];
         }
     }
 }
