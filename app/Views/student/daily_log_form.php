@@ -1,35 +1,89 @@
-<div class="flex flex-col gap-2">
-  <label class="text-sm font-semibold text-slate-700">แนบไฟล์ (สูงสุด 5MB/ไฟล์)</label>
-  
-  <!-- กล่อง Dropzone -->
-  <div id="dropzone" 
-       onclick="document.getElementById('file-input').click()"
-       class="border-2 border-dashed border-slate-200 hover:border-indigo-500 bg-slate-50 hover:bg-indigo-50/30 rounded-2xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2">
+<?php
+/**
+ * Daily Log Create / Edit Form View
+ */
+$today = $today ?? date('Y-m-d');
+$thaiDate = date('j F Y', strtotime('+543 years'));
+?>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+  <div class="mb-6">
+    <a href="/student/daily-logs" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-700 mb-2">
+      <span class="material-symbols-outlined text-[18px] mr-1">arrow_back</span> กลับหน้ารายการ
+    </a>
+    <h1 class="text-2xl font-bold text-slate-800">บันทึกงานประจำวัน</h1>
+    <p class="text-sm text-slate-500 mt-1"><?= htmlspecialchars($thaiDate) ?></p>
+  </div>
+
+  <form action="/student/daily-logs" method="POST" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sm:p-8 space-y-6">
     
-    <input type="file" id="file-input" name="attachment" accept="image/png, image/jpeg, image/webp, application/pdf" class="hidden" onchange="previewFile(this)">
-    
-    <div id="upload-placeholder" class="flex flex-col items-center gap-1">
-      <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
-        <span class="material-symbols-outlined text-[24px]">upload_file</span>
-      </div>
-      <p class="text-sm font-medium text-indigo-600 mt-1">แตะเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-      <p class="text-xs text-slate-400">รองรับ JPG, PNG, WEBP, PDF</p>
+    <!-- วันที่บันทึก -->
+    <div class="flex flex-col gap-2">
+      <label for="log_date" class="text-sm font-semibold text-slate-700">วันที่ปฏิบัติงาน <span class="text-rose-500">*</span></label>
+      <input type="date" id="log_date" name="log_date" value="<?= htmlspecialchars($today) ?>" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
 
-    <!-- กล่องแสดงรูปตัวอย่างเมื่อเลือกไฟล์แล้ว -->
-    <div id="preview-box" class="hidden flex-col items-center gap-2">
-      <img id="image-preview" src="" alt="ตัวอย่างรูปภาพ" class="max-h-48 rounded-xl object-contain shadow-sm border border-slate-200">
-      <p id="file-name" class="text-xs text-slate-600 font-medium"></p>
-      <button type="button" onclick="removeFile(event)" class="text-xs text-rose-600 hover:underline">ลบรูปภาพ</button>
+    <!-- หัวข้อ / งานที่ได้รับมอบหมาย -->
+    <div class="flex flex-col gap-2">
+      <label for="title" class="text-sm font-semibold text-slate-700">หัวข้องาน / งานที่ได้รับมอบหมาย <span class="text-rose-500">*</span></label>
+      <input type="text" id="title" name="title" placeholder="เช่น ติดตั้งระบบเครือข่าย, ออกแบบ UI หน้ารายงาน" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
-  </div>
+
+    <!-- รายละเอียดการปฏิบัติงาน -->
+    <div class="flex flex-col gap-2">
+      <label for="activity_description" class="text-sm font-semibold text-slate-700">รายละเอียดการปฏิบัติงาน <span class="text-rose-500">*</span></label>
+      <textarea id="activity_description" name="activity_description" rows="4" placeholder="อธิบายขั้นตอนการทำงาน สิ่งที่ทำในวันนี้อย่างละเอียด..." required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+    </div>
+
+    <!-- ปัญหาและอุปสรรค -->
+    <div class="flex flex-col gap-2">
+      <label for="problems_encountered" class="text-sm font-semibold text-slate-700">ปัญหา / อุปสรรคที่พบ (ถ้ามี)</label>
+      <textarea id="problems_encountered" name="problems_encountered" rows="3" placeholder="ระบุปัญหาที่พบในการทำงาน หรือข้อผิดพลาด..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+    </div>
+
+    <!-- สิ่งที่ได้เรียนรู้ -->
+    <div class="flex flex-col gap-2">
+      <label for="learning_outcomes" class="text-sm font-semibold text-slate-700">ความรู้ / ทักษะที่ได้รับ</label>
+      <textarea id="learning_outcomes" name="learning_outcomes" rows="3" placeholder="สิ่งที่ได้เรียนรู้ใหม่ ทักษะที่พัฒนาขึ้น..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+    </div>
+
+    <!-- กล่องอัปโหลดรูปภาพ -->
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-semibold text-slate-700">แนบไฟล์รูปภาพการปฏิบัติงาน</label>
+      <div id="dropzone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-200 hover:border-indigo-500 bg-slate-50 hover:bg-indigo-50/30 rounded-2xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2">
+        <input type="file" id="file-input" name="photo" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="previewFile(this)">
+        
+        <div id="upload-placeholder" class="flex flex-col items-center gap-1">
+          <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]">add_photo_alternate</span>
+          </div>
+          <p class="text-sm font-medium text-indigo-600 mt-1">แตะเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+          <p class="text-xs text-slate-400">รองรับ JPG, PNG, WEBP (สูงสุด 5MB)</p>
+        </div>
+
+        <div id="preview-box" class="hidden flex-col items-center gap-2">
+          <img id="image-preview" src="" alt="ตัวอย่างรูปภาพ" class="max-h-48 rounded-xl object-contain shadow-sm border border-slate-200">
+          <p id="file-name" class="text-xs text-slate-600 font-medium"></p>
+          <button type="button" onclick="removeFile(event)" class="text-xs text-rose-600 hover:underline">ลบรูปภาพ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ปุ่มบันทึก -->
+    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+      <a href="/student/daily-logs" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">ยกเลิก</a>
+      <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-200 transition-transform active:scale-[0.98] flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">send</span> ส่งบันทึกนี้
+      </button>
+    </div>
+
+  </form>
 </div>
 
 <script>
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
 
-// รองรับการลากไฟล์มาวาง (Drag & Drop)
 ['dragenter', 'dragover'].forEach(eventName => {
   dropzone.addEventListener(eventName, (e) => {
     e.preventDefault();
@@ -46,9 +100,8 @@ const fileInput = document.getElementById('file-input');
 
 dropzone.addEventListener('drop', (e) => {
   const dt = e.dataTransfer;
-  const files = dt.files;
-  if (files.length > 0) {
-    fileInput.files = files;
+  if (dt.files.length > 0) {
+    fileInput.files = dt.files;
     previewFile(fileInput);
   }
 });
@@ -62,17 +115,11 @@ function previewFile(input) {
     const fileName = document.getElementById('file-name');
 
     fileName.textContent = file.name;
-
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        imagePreview.src = e.target.result;
-        imagePreview.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-    } else {
-      imagePreview.classList.add('hidden');
-    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      imagePreview.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
 
     placeholder.classList.add('hidden');
     previewBox.classList.remove('hidden');
