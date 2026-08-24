@@ -2,18 +2,15 @@
 
 namespace App\Controllers;
 
-use App\Services\DailyLogService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
 
 final class DailyLogController
 {
-    private DailyLogService $dailyLogs;
     private SupabaseClient $client;
 
     public function __construct()
     {
-        $this->dailyLogs = new DailyLogService();
         $this->client = new SupabaseClient();
     }
 
@@ -21,8 +18,8 @@ final class DailyLogController
     {
         $logs = [];
         try {
-            $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=log_date.desc,id.desc&limit=50&select=*');
-        } catch (\Exception) {
+            $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=id.desc&limit=50&select=*');
+        } catch (\Exception $e) {
             $logs = [];
         }
 
@@ -44,30 +41,36 @@ final class DailyLogController
 
     public function store(array $params): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+        $raw = file_get_contents('php://input');
+        $input = json_decode($raw, true) ?? $_POST;
 
-        $title = trim((string) ($input['title'] ?? ''));
+        $title = trim((string) ($input['title'] ?? 'บันทึกการปฏิบัติงาน'));
         $description = trim((string) ($input['activity_description'] ?? ''));
         $problems = trim((string) ($input['problems_encountered'] ?? ''));
         $learning = trim((string) ($input['learning_outcomes'] ?? ''));
         $logDate = trim((string) ($input['log_date'] ?? date('Y-m-d')));
         $photoUrl = $input['photo_base64'] ?? null;
 
+        $record = [
+            'internship_id' => 3,
+            'student_id' => 1,
+            'log_date' => !empty($logDate) ? $logDate : date('Y-m-d'),
+            'title' => !empty($title) ? $title : 'บันทึกการปฏิบัติงาน',
+            'tasks_performed' => !empty($description) ? $description : $title,
+            'activity_description' => $description,
+            'problems_encountered' => $problems,
+            'learning_outcomes' => $learning,
+            'status' => 'submitted',
+        ];
+
+        if (!empty($photoUrl)) {
+            $record['photo_url'] = $photoUrl;
+        }
+
         try {
-            $this->client->restInsert('daily_logs', [
-                'internship_id' => 3,
-                'student_id' => 1,
-                'log_date' => !empty($logDate) ? $logDate : date('Y-m-d'),
-                'title' => !empty($title) ? $title : 'บันทึกการปฏิบัติงาน',
-                'tasks_performed' => !empty($description) ? $description : $title,
-                'activity_description' => $description,
-                'problems_encountered' => $problems,
-                'learning_outcomes' => $learning,
-                'photo_url' => $photoUrl,
-                'status' => 'submitted',
-            ]);
-        } catch (\Exception $e) {
-            // ignore
+            $this->client->restInsert('daily_logs', $record);
+        } catch (\Throwable $e) {
+            error_log('Insert daily_logs error: ' . $e->getMessage());
         }
 
         header('Content-Type: application/json; charset=utf-8');

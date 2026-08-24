@@ -1,6 +1,6 @@
 <?php
 /**
- * Daily Log Form View
+ * Daily Log Form
  */
 $today = $today ?? date('Y-m-d');
 $thaiDate = date('j F Y', strtotime('+543 years'));
@@ -44,14 +44,14 @@ $thaiDate = date('j F Y', strtotime('+543 years'));
     <div class="flex flex-col gap-2">
       <label class="text-sm font-semibold text-slate-700">แนบไฟล์รูปภาพการปฏิบัติงาน</label>
       <div id="dropzone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-200 hover:border-indigo-500 bg-slate-50 hover:bg-indigo-50/30 rounded-2xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2">
-        <input type="file" id="file-input" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="previewFile(this)">
+        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="processImage(this)">
         
         <div id="upload-placeholder" class="flex flex-col items-center gap-1">
           <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
             <span class="material-symbols-outlined text-[24px]">add_photo_alternate</span>
           </div>
           <p class="text-sm font-medium text-indigo-600 mt-1">แตะเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-          <p class="text-xs text-slate-400">รองรับ JPG, PNG, WEBP</p>
+          <p class="text-xs text-slate-400">รองรับภาพถ่ายทุกชนิด (ย่อขนาดอัตโนมัติ)</p>
         </div>
 
         <div id="preview-box" class="hidden flex-col items-center gap-2">
@@ -76,42 +76,44 @@ let photoBase64 = null;
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
 
-['dragenter', 'dragover'].forEach(name => {
-  dropzone.addEventListener(name, (e) => {
-    e.preventDefault();
-    dropzone.classList.add('border-indigo-600', 'bg-indigo-50/50');
-  });
-});
+['dragenter', 'dragover'].forEach(n => dropzone.addEventListener(n, e => { e.preventDefault(); dropzone.classList.add('border-indigo-600'); }));
+['dragleave', 'drop'].forEach(n => dropzone.addEventListener(n, e => { e.preventDefault(); dropzone.classList.remove('border-indigo-600'); }));
 
-['dragleave', 'drop'].forEach(name => {
-  dropzone.addEventListener(name, (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('border-indigo-600', 'bg-indigo-50/50');
-  });
-});
-
-dropzone.addEventListener('drop', (e) => {
-  const dt = e.dataTransfer;
-  if (dt.files.length > 0) {
-    fileInput.files = dt.files;
-    previewFile(fileInput);
+dropzone.addEventListener('drop', e => {
+  if (e.dataTransfer.files.length > 0) {
+    fileInput.files = e.dataTransfer.files;
+    processImage(fileInput);
   }
 });
 
-function previewFile(input) {
+function processImage(input) {
   const file = input.files[0];
-  if (file) {
-    document.getElementById('file-name').textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById('image-preview').src = e.target.result;
-      photoBase64 = e.target.result;
-    };
-    reader.readAsDataURL(file);
+  if (!file) return;
 
-    document.getElementById('upload-placeholder').classList.add('hidden');
-    document.getElementById('preview-box').classList.remove('hidden');
-  }
+  document.getElementById('file-name').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 800;
+      const scaleSize = MAX_WIDTH / img.width;
+      const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
+      const height = (img.width > MAX_WIDTH) ? (img.height * scaleSize) : img.height;
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('image-preview').src = photoBase64;
+      document.getElementById('upload-placeholder').classList.add('hidden');
+      document.getElementById('preview-box').classList.remove('hidden');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function removeFile(e) {
@@ -141,7 +143,7 @@ document.getElementById('daily-form').addEventListener('submit', async function(
   };
 
   try {
-    await fetch('/student/daily-logs', {
+    const res = await fetch('/student/daily-logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
