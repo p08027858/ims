@@ -56,8 +56,10 @@ final class DailyLogController
         try {
             $this->client->restInsert('daily_logs', [
                 'internship_id' => 3,
+                'student_id' => 1,
                 'log_date' => !empty($logDate) ? $logDate : date('Y-m-d'),
                 'title' => !empty($title) ? $title : 'บันทึกการปฏิบัติงาน',
+                'tasks_performed' => !empty($description) ? $description : $title,
                 'activity_description' => $description,
                 'problems_encountered' => $problems,
                 'learning_outcomes' => $learning,
