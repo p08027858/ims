@@ -4,6 +4,7 @@
  */
 $today = $today ?? date('Y-m-d');
 $thaiDate = date('j F Y', strtotime('+543 years'));
+$csrfToken = \App\Support\Session::csrfToken();
 ?>
 
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
@@ -15,8 +16,10 @@ $thaiDate = date('j F Y', strtotime('+543 years'));
     <p class="text-sm text-slate-500 mt-1"><?= htmlspecialchars($thaiDate) ?></p>
   </div>
 
-  <form action="/student/daily-logs" method="POST" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sm:p-8 space-y-6">
-    
+  <form id="daily-log-form" action="/student/daily-logs" method="POST" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sm:p-8 space-y-6">
+    <input type="hidden" name="csrf_token" id="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+    <input type="hidden" name="photo_base64" id="photo_base64" value="">
+
     <!-- วันที่บันทึก -->
     <div class="flex flex-col gap-2">
       <label for="log_date" class="text-sm font-semibold text-slate-700">วันที่ปฏิบัติงาน <span class="text-rose-500">*</span></label>
@@ -51,14 +54,14 @@ $thaiDate = date('j F Y', strtotime('+543 years'));
     <div class="flex flex-col gap-2">
       <label class="text-sm font-semibold text-slate-700">แนบไฟล์รูปภาพการปฏิบัติงาน</label>
       <div id="dropzone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-200 hover:border-indigo-500 bg-slate-50 hover:bg-indigo-50/30 rounded-2xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2">
-        <input type="file" id="file-input" name="photo" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="previewFile(this)">
+        <input type="file" id="file-input" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="previewFile(this)">
         
         <div id="upload-placeholder" class="flex flex-col items-center gap-1">
           <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
             <span class="material-symbols-outlined text-[24px]">add_photo_alternate</span>
           </div>
           <p class="text-sm font-medium text-indigo-600 mt-1">แตะเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-          <p class="text-xs text-slate-400">รองรับ JPG, PNG, WEBP (สูงสุด 5MB)</p>
+          <p class="text-xs text-slate-400">รองรับ JPG, PNG, WEBP</p>
         </div>
 
         <div id="preview-box" class="hidden flex-col items-center gap-2">
@@ -72,17 +75,17 @@ $thaiDate = date('j F Y', strtotime('+543 years'));
     <!-- ปุ่มบันทึก -->
     <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
       <a href="/student/daily-logs" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">ยกเลิก</a>
-      <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-200 transition-transform active:scale-[0.98] flex items-center gap-2">
+      <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-200 transition-transform active:scale-[0.98] flex items-center gap-2">
         <span class="material-symbols-outlined text-[18px]">send</span> ส่งบันทึกนี้
       </button>
     </div>
-
   </form>
 </div>
 
 <script>
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
+const photoBase64 = document.getElementById('photo_base64');
 
 ['dragenter', 'dragover'].forEach(eventName => {
   dropzone.addEventListener(eventName, (e) => {
@@ -118,6 +121,7 @@ function previewFile(input) {
     const reader = new FileReader();
     reader.onload = function(e) {
       imagePreview.src = e.target.result;
+      photoBase64.value = e.target.result;
     };
     reader.readAsDataURL(file);
 
@@ -129,6 +133,7 @@ function previewFile(input) {
 function removeFile(e) {
   e.stopPropagation();
   fileInput.value = '';
+  photoBase64.value = '';
   document.getElementById('image-preview').src = '';
   document.getElementById('preview-box').classList.add('hidden');
   document.getElementById('upload-placeholder').classList.remove('hidden');
