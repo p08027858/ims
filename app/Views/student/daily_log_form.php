@@ -137,35 +137,26 @@ document.getElementById('daily-form').addEventListener('submit', async function(
   const title = document.getElementById('title').value;
 
   const payload = {
-    internship_id: 3,
-    student_id: 1,
     log_date: document.getElementById('log_date').value,
     title: title,
-    tasks_performed: desc,
     activity_description: desc,
     problems_encountered: document.getElementById('problems_encountered').value,
     learning_outcomes: document.getElementById('learning_outcomes').value,
-    photo_url: photoBase64,
-    status: 'submitted'
+    photo_base64: photoBase64
   };
 
   try {
-    const res = await fetch('https://klhrxucugkyzjpufdhtj.supabase.co/rest/v1/daily_logs', {
+    const res = await fetch('/student/daily-logs', {
       method: 'POST',
-      headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsaHJ4dWN1Z2t5empwdWZkaHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwNDAyNjEsImV4cCI6MjA1NTYxNjI2MX0.g9iK47R5b8wz1pC0cIkmF6R_q0_4aE1x47Yg2P2V6bE',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsaHJ4dWN1Z2t5empwdWZkaHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwNDAyNjEsImV4cCI6MjA1NTYxNjI2MX0.g9iK47R5b8wz1pC0cIkmF6R_q0_4aE1x47Yg2P2V6bE',
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    if (res.ok) {
+    const data = await res.json();
+    if (res.ok && data.success) {
       window.location.href = '/student/daily-logs';
     } else {
-      const errData = await res.json();
-      alert('บันทึกไม่สำเร็จ: ' + (errData.message || JSON.stringify(errData)));
+      alert('บันทึกไม่สำเร็จ: ' + (data.error || 'กรุณาลองใหม่อีกครั้ง'));
       btn.disabled = false;
       btnText.textContent = 'ส่งบันทึกนี้';
     }

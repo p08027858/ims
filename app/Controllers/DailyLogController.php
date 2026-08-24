@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Services\SupabaseClient;
-use App\Support\Session;
 
 final class DailyLogController
 {
@@ -44,7 +43,7 @@ final class DailyLogController
         $raw = file_get_contents('php://input');
         $input = json_decode($raw, true) ?? $_POST;
 
-        $title = trim((string) ($input['title'] ?? 'บันทึกการปฏิบัติงาน'));
+        $title = trim((string) ($input['title'] ?? ''));
         $description = trim((string) ($input['activity_description'] ?? ''));
         $problems = trim((string) ($input['problems_encountered'] ?? ''));
         $learning = trim((string) ($input['learning_outcomes'] ?? ''));
@@ -60,21 +59,19 @@ final class DailyLogController
             'activity_description' => $description,
             'problems_encountered' => $problems,
             'learning_outcomes' => $learning,
+            'photo_url' => $photoUrl,
             'status' => 'submitted',
         ];
 
-        if (!empty($photoUrl)) {
-            $record['photo_url'] = $photoUrl;
-        }
-
         try {
             $this->client->restInsert('daily_logs', $record);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => true]);
         } catch (\Throwable $e) {
-            error_log('Insert daily_logs error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
-
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['success' => true]);
         exit;
     }
 }
