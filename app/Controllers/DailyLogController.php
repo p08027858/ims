@@ -44,43 +44,18 @@ final class DailyLogController
 
     public function store(array $params): void
     {
-        $user = Session::user();
-        $userId = (string) ($user['id'] ?? '');
+        $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
-        // ค้นหา internship_id
-        $internshipId = 3;
-        try {
-            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
-            $studentId = $students[0]['id'] ?? null;
-            if ($studentId) {
-                $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=1&select=id');
-                if (!empty($internships[0]['id'])) {
-                    $internshipId = (int) $internships[0]['id'];
-                }
-            }
-        } catch (\Exception) {
-            $internshipId = 3;
-        }
-
-        $title = trim((string) ($_POST['title'] ?? ''));
-        $description = trim((string) ($_POST['activity_description'] ?? ''));
-        $problems = trim((string) ($_POST['problems_encountered'] ?? ''));
-        $learning = trim((string) ($_POST['learning_outcomes'] ?? ''));
-        $logDate = trim((string) ($_POST['log_date'] ?? date('Y-m-d')));
-
-        // บันทึกรูปภาพถ้ามี
-        $photoUrl = null;
-        if (!empty($_POST['photo_base64'])) {
-            $photoUrl = $_POST['photo_base64'];
-        } elseif (!empty($_FILES['photo']['tmp_name']) && is_uploaded_file($_FILES['photo']['tmp_name'])) {
-            $photoData = file_get_contents($_FILES['photo']['tmp_name']);
-            $mime = mime_content_type($_FILES['photo']['tmp_name']);
-            $photoUrl = 'data:' . $mime . ';base64,' . base64_encode($photoData);
-        }
+        $title = trim((string) ($input['title'] ?? ''));
+        $description = trim((string) ($input['activity_description'] ?? ''));
+        $problems = trim((string) ($input['problems_encountered'] ?? ''));
+        $learning = trim((string) ($input['learning_outcomes'] ?? ''));
+        $logDate = trim((string) ($input['log_date'] ?? date('Y-m-d')));
+        $photoUrl = $input['photo_base64'] ?? null;
 
         try {
             $this->client->restInsert('daily_logs', [
-                'internship_id' => (int) $internshipId,
+                'internship_id' => 3,
                 'log_date' => !empty($logDate) ? $logDate : date('Y-m-d'),
                 'title' => !empty($title) ? $title : 'บันทึกการปฏิบัติงาน',
                 'activity_description' => $description,
@@ -93,7 +68,8 @@ final class DailyLogController
             // ignore
         }
 
-        header('Location: /student/daily-logs');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => true]);
         exit;
     }
 }
