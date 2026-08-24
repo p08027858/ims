@@ -17,14 +17,10 @@ final class DailyLogController
         $this->client = new SupabaseClient();
     }
 
-    /**
-     * ดึงข้อมูลรายการบันทึกประจำวันของนักศึกษา (/student/daily-logs)
-     */
     public function listData(array $params): array
     {
         $user = Session::user();
         $userId = (string) ($user['id'] ?? '');
-
         $internship = $this->resolveActiveInternship($userId);
         $logs = [];
 
@@ -45,9 +41,6 @@ final class DailyLogController
         ];
     }
 
-    /**
-     * ดึงข้อมูลสำหรับหน้าสร้างบันทึกใหม่ (/student/daily-logs/new)
-     */
     public function newFormData(array $params): array
     {
         $user = Session::user();
@@ -62,9 +55,6 @@ final class DailyLogController
         ];
     }
 
-    /**
-     * Action: บันทึกข้อมูลรายงานประจำวัน (POST /student/daily-logs)
-     */
     public function store(array $params): void
     {
         $user = Session::user();
@@ -72,20 +62,29 @@ final class DailyLogController
         $internship = $this->resolveActiveInternship($userId);
 
         $internshipId = $internship['id'] ?? 3;
-        $title = trim((string) ($_POST['title'] ?? $_POST['activity_title'] ?? 'บันทึกการฝึกงาน'));
-        $description = trim((string) ($_POST['activity_description'] ?? $_POST['description'] ?? ''));
-        $problems = trim((string) ($_POST['problems_encountered'] ?? $_POST['problem'] ?? ''));
-        $learning = trim((string) ($_POST['learning_outcomes'] ?? $_POST['learnings'] ?? ''));
+        $title = trim((string) ($_POST['title'] ?? 'บันทึกการฝึกงาน'));
+        $description = trim((string) ($_POST['activity_description'] ?? ''));
+        $problems = trim((string) ($_POST['problems_encountered'] ?? ''));
+        $learning = trim((string) ($_POST['learning_outcomes'] ?? ''));
         $logDate = trim((string) ($_POST['log_date'] ?? date('Y-m-d')));
+
+        // บันทึกรูปภาพถ้ามี
+        $photoUrl = null;
+        if (!empty($_FILES['photo']['tmp_name']) && is_uploaded_file($_FILES['photo']['tmp_name'])) {
+            $photoData = file_get_contents($_FILES['photo']['tmp_name']);
+            $mime = mime_content_type($_FILES['photo']['tmp_name']);
+            $photoUrl = 'data:' . $mime . ';base64,' . base64_encode($photoData);
+        }
 
         try {
             $this->client->restInsert('daily_logs', [
                 'internship_id' => (int) $internshipId,
                 'log_date' => $logDate,
-                'title' => $title,
+                'title' => !empty($title) ? $title : 'บันทึกการปฏิบัติงาน',
                 'activity_description' => $description,
                 'problems_encountered' => $problems,
                 'learning_outcomes' => $learning,
+                'photo_url' => $photoUrl,
                 'status' => 'submitted',
             ]);
         } catch (\Exception $e) {
@@ -96,9 +95,6 @@ final class DailyLogController
         exit;
     }
 
-    /**
-     * ฟังก์ชันค้นหารอบฝึกงานที่กำลังดำเนินอยู่ (พร้อม Fallback)
-     */
     private function resolveActiveInternship(string $userId): ?array
     {
         try {
@@ -112,7 +108,6 @@ final class DailyLogController
                 }
             }
 
-            // Fallback: ดึงรอบฝึกงานล่าสุดในระบบ
             $allInternships = $this->client->restGet('internships', 'deleted_at=is.null&order=id.desc&limit=1&select=*');
             return $allInternships[0] ?? null;
         } catch (\Exception) {
