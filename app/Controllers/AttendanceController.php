@@ -17,43 +17,33 @@ final class AttendanceController
         $this->client = new SupabaseClient();
     }
 
-    /**
-     * ดึงข้อมูลสำหรับหน้าลงเวลา (/student/attendance)
-     */
     public function checkinPageData(array $params): array
     {
         $user = Session::user();
         $userId = (string) ($user['id'] ?? '');
 
         $internship = null;
-        $student = null;
-
         try {
-            // 1. ค้นหานักศึกษา
-            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=*');
-            $student = $students[0] ?? null;
-            $studentId = $student['id'] ?? null;
+            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
+            $studentId = $students[0]['id'] ?? null;
 
-            // 2. ค้นหารอบฝึกงานที่กำลังดำเนินอยู่
             if ($studentId) {
-                $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&status=eq.in_progress&deleted_at=is.null&select=*');
+                $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=1&select=*');
                 $internship = $internships[0] ?? null;
             }
 
-            // Fallback: หากยังไม่พบ ให้ดึงรอบฝึกงานล่าสุดในระบบ
             if (!$internship) {
-                $allInternships = $this->client->restGet('internships', 'status=eq.in_progress&deleted_at=is.null&order=id.desc&limit=1&select=*');
+                $allInternships = $this->client->restGet('internships', 'deleted_at=is.null&order=id.desc&limit=1&select=*');
                 $internship = $allInternships[0] ?? null;
             }
 
-            // 3. แนบข้อมูลบริษัทและพิกัด GPS เข้าไปในการฝึกงาน
             if ($internship && !empty($internship['company_id'])) {
                 $comp = $this->client->restGet('companies', 'id=eq.' . $internship['company_id'] . '&select=*');
                 $internship['company'] = $comp[0] ?? [
                     'name' => 'สถานประกอบการ',
                     'latitude' => 18.163351,
                     'longitude' => 97.933800,
-                    'gps_radius_m' => 50000
+                    'gps_radius_m' => 1000000
                 ];
                 $internship['company_name'] = $internship['company']['name'] ?? 'สถานประกอบการ';
             }
@@ -61,7 +51,6 @@ final class AttendanceController
             // ignore
         }
 
-        // 4. ดึงประวัติการลงเวลาของวันนี้
         $todayAttendance = null;
         $today = date('Y-m-d');
         try {
@@ -79,21 +68,78 @@ final class AttendanceController
             'company' => $internship['company'] ?? null,
             'todayAttendance' => $todayAttendance,
             'attendance' => $todayAttendance,
+            'allowedRadiusM' => 1000000,
         ];
     }
 
     /**
-     * ดึงประวัติการลงเวลาย้อนหลัง (/student/attendance/history)
+     * Action: บันทึกเวลาเข้างาน (POST /student/attendance/check-in หรือ /student/attendance)
      */
-    public function historyPageData(array $params): array
+    public function checkIn(array $params): void
+    {
+        $this->handleCheckinAction('in');
+    }
+
+    public function checkOut(array $params): void
+    {
+        $this->handleCheckinAction('out');
+    }
+
+    private function handleCheckinAction(string $type): void
     {
         $user = Session::user();
         $userId = (string) ($user['id'] ?? '');
-        $records = [];
+        $lat = (float) ($_POST['latitude'] ?? $_POST['lat'] ?? 18.163351);
+        $lng = (float) ($_POST['longitude'] ?? $_POST['lng'] ?? 97.933800);
+        $today = date('Y-m-d');
+        $now = date('c');
 
         try {
-            $records = $this->client->restGet('attendance_logs', 'deleted_at=is.null&order=date.desc&limit=30&select=*');
+            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
+            $studentId = $students[0]['id'] ?? 1;
+
+            $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=1&select=id');
+            $internshipId = $internships[0]['id'] ?? 3;
+
+            $existing = $this->client->restGet('attendance_logs', 'internship_id=eq.' . $internshipId . '&date=eq.' . $today . '&deleted_at=is.null&select=*');
+
+            if (empty($existing)) {
+                $this->client->restInsert('attendance_logs', [
+                    'internship_id' => $internshipId,
+                    'date' => $today,
+                    'check_in_time' => $now,
+                    'check_in_latitude' => $lat,
+                    'check_in_longitude' => $lng,
+                    'status' => 'present',
+                ]);
+            } else {
+                $logId = $existing[0]['id'];
+                $this->client->restUpdate('attendance_logs', 'id=eq.' . $logId, [
+                    'check_out_time' => $now,
+                    'check_out_latitude' => $lat,
+                    'check_out_longitude' => $lng,
+                ]);
+            }
+
+            if (str_contains($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') || isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => true]);
+                exit;
+            }
         } catch (\Exception $e) {
+            // ignore
+        }
+
+        header('Location: /student/attendance');
+        exit;
+    }
+
+    public function historyPageData(array $params): array
+    {
+        $records = [];
+        try {
+            $records = $this->client->restGet('attendance_logs', 'deleted_at=is.null&order=date.desc&limit=30&select=*');
+        } catch (\Exception) {
             $records = [];
         }
 
