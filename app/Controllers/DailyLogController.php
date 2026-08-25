@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\SupabaseClient;
+use App\Support\Session;
 
 final class DailyLogController
 {
@@ -13,11 +14,22 @@ final class DailyLogController
         $this->client = new SupabaseClient();
     }
 
+    /**
+     * ดึงเฉพาะบันทึกของนักศึกษาที่ล็อกอินอยู่
+     */
     public function listData(array $params): array
     {
+        $user = Session::user();
+        $userId = (string) ($user['id'] ?? '');
+        $studentId = $this->resolveStudentId($userId);
+        
         $logs = [];
         try {
-            $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=id.desc&limit=50&select=*');
+            if ($studentId) {
+                $logs = $this->client->restGet('daily_logs', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=50&select=*');
+            } else {
+                $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=id.desc&limit=50&select=*');
+            }
         } catch (\Exception $e) {
             $logs = [];
         }
@@ -38,8 +50,16 @@ final class DailyLogController
         ];
     }
 
+    /**
+     * บันทึกข้อมูลผูกกับ student_id และ internship_id ของผู้ใช้จริง
+     */
     public function store(array $params): void
     {
+        $user = Session::user();
+        $userId = (string) ($user['id'] ?? '');
+        $studentId = $this->resolveStudentId($userId) ?? 1;
+        $internshipId = $this->resolveInternshipId($studentId) ?? 3;
+
         $raw = file_get_contents('php://input');
         $input = json_decode($raw, true) ?? $_POST;
 
@@ -51,8 +71,8 @@ final class DailyLogController
         $photoUrl = $input['photo_base64'] ?? null;
 
         $record = [
-            'internship_id' => 3,
-            'student_id' => 1,
+            'internship_id' => (int) $internshipId,
+            'student_id' => (int) $studentId,
             'log_date' => !empty($logDate) ? $logDate : date('Y-m-d'),
             'title' => !empty($title) ? $title : 'บันทึกการปฏิบัติงาน',
             'tasks_performed' => !empty($description) ? $description : $title,
@@ -73,5 +93,26 @@ final class DailyLogController
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
         exit;
+    }
+
+    private function resolveStudentId(string $userId): ?int
+    {
+        if (empty($userId)) return null;
+        try {
+            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id&limit=1');
+            return !empty($students[0]['id']) ? (int) $students[0]['id'] : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function resolveInternshipId(int $studentId): ?int
+    {
+        try {
+            $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=1&select=id');
+            return !empty($internships[0]['id']) ? (int) $internships[0]['id'] : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

@@ -2,14 +2,7 @@
 /**
  * Daily Logs List View
  */
-$client = new \App\Services\SupabaseClient();
-$logs = [];
-try {
-    // ดึงโดยเรียง id ล่าสุดขึ้นก่อนเสมอ
-    $logs = $client->restGet('daily_logs', 'deleted_at=is.null&order=id.desc&limit=50&select=*');
-} catch (\Exception $e) {
-    $logs = $dailyLogs ?? $logs ?? [];
-}
+$logs = $dailyLogs ?? $logs ?? $items ?? [];
 ?>
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
