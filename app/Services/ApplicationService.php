@@ -62,12 +62,36 @@ final class ApplicationService
                 if (!empty($app['student_id'])) {
                     $stu = $this->client->restGet('students', 'id=eq.' . $app['student_id'] . '&select=student_code,first_name,last_name');
                     $app['student'] = $stu[0] ?? null;
-                    $app['student_name'] = isset($stu[0]) ? trim($stu[0]['first_name'] . ' ' . $stu[0]['last_name']) : 'นักศึกษา';
+                    $app['student_name'] = isset($stu[0]) ? trim(($stu[0]['first_name'] ?? '') . ' ' . ($stu[0]['last_name'] ?? '')) : 'นักศึกษา';
                 }
             }
 
             return $apps;
         } catch (\Exception) {
+            return [];
+        }
+    }
+
+    /**
+     * ดึงรายการคำขอฝึกงานที่ตอบรับแล้ว แต่ยังไม่ได้จับคู่อาจารย์นิเทศก์ (สำหรับหน้าจับคู่นิเทศของ Admin)
+     */
+    public function listAcceptedUnmatched(): array
+    {
+        try {
+            $apps = $this->client->restGet(
+                'internship_applications',
+                'status=in.(accepted,approved)&order=id.desc&limit=100&select=*'
+            ) ?? [];
+
+            if (empty($apps)) {
+                return $this->client->restGet(
+                    'internships',
+                    'teacher_id=is.null&deleted_at=is.null&order=id.desc&limit=100&select=*'
+                ) ?? [];
+            }
+
+            return $apps;
+        } catch (\Throwable $e) {
             return [];
         }
     }
