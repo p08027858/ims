@@ -42,6 +42,26 @@ final class DailyLogController
         ];
     }
 
+    /**
+     * หน้าตรวจบันทึกประจำวันของสถานประกอบการ / อาจารย์
+     */
+    public function reviewPageData(array $params): array
+    {
+        $logs = [];
+        try {
+            $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=log_date.desc,id.desc&limit=50&select=*') ?? [];
+        } catch (\Throwable $e) {
+            $logs = [];
+        }
+
+        return [
+            'logs' => $logs,
+            'dailyLogs' => $logs,
+            'items' => $logs,
+            'pendingCount' => count(array_filter($logs, fn($item) => ($item['status'] ?? '') === 'submitted')),
+        ];
+    }
+
     public function newFormData(array $params): array
     {
         return [
