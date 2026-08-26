@@ -43,8 +43,11 @@ final class ApplicationController
         $company = $this->companies->getCompany($id);
 
         try {
-            $jobs = $this->client->restGet('company_job_postings', 'company_id=eq.' . $id . '&deleted_at=is.null&select=*');
-        } catch (\Exception) {
+            $jobs = $this->client->restGet(
+                'company_job_postings',
+                'company_id=eq.' . $id . '&deleted_at=is.null&select=*'
+            );
+        } catch (\Throwable) {
             $jobs = [];
         }
 
@@ -56,35 +59,22 @@ final class ApplicationController
 
     public function apply(array $params): void
     {
-        $user = Session::user();
-        $userId = (string) ($user['id'] ?? '');
-
-        $companyId = (int) ($params['id'] ?? $_POST['company_id'] ?? 0);
-        if ($companyId === 0 && !empty($_SERVER['HTTP_REFERER'])) {
-            if (preg_match('#/student/companies/(\d+)#', $_SERVER['HTTP_REFERER'], $m)) {
-                $companyId = (int) $m[1];
-            }
-        }
-        if ($companyId === 0) {
-            $companyId = 46; // Fallback Default
-        }
-
-        $position = trim((string) ($_POST['position'] ?? $_POST['job_title'] ?? 'นักศึกษาฝึกงาน'));
-        $notes = trim((string) ($_POST['notes'] ?? $_POST['cover_letter'] ?? ''));
-
         try {
-            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
-            $studentId = $students[0]['id'] ?? 1;
+            $userId = $this->requireUserId();
+            $studentId = $this->requireStudentId($userId);
+            $companyId = $this->requireCompanyId($params);
+            $position = trim((string) ($_POST['position'] ?? $_POST['job_title'] ?? ''));
+            $notes = trim((string) ($_POST['notes'] ?? $_POST['cover_letter'] ?? ''));
 
             $this->client->restInsert('internship_applications', [
-                'student_id' => (int) $studentId,
+                'student_id' => $studentId,
                 'company_id' => $companyId,
-                'position' => !empty($position) ? $position : 'นักศึกษาฝึกงาน',
+                'position' => $position !== '' ? $position : 'Intern',
                 'cover_letter' => $notes,
-                'status' => 'pending'
+                'status' => 'pending',
             ]);
-        } catch (\Exception $e) {
-            // ignore
+        } catch (\Throwable $e) {
+            Session::flashError($e->getMessage());
         }
 
         header('Location: /student/applications');
@@ -94,16 +84,31 @@ final class ApplicationController
     public function myApplicationsData(array $params): array
     {
         $apps = [];
+
         try {
-            $apps = $this->client->restGet('internship_applications', 'deleted_at=is.null&order=id.desc&select=*');
+            $userId = $this->requireUserId();
+            $studentId = $this->requireStudentId($userId);
+            $apps = $this->client->restGet(
+                'internship_applications',
+                'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&select=*'
+            );
+
             foreach ($apps as &$app) {
                 if (!empty($app['company_id'])) {
-                    $comp = $this->client->restGet('companies', 'id=eq.' . $app['company_id'] . '&select=name,address,province,business_type');
-                    $app['company'] = $comp[0] ?? ['name' => 'สถานประกอบการ', 'province' => '-', 'business_type' => '-'];
-                    $app['company_name'] = $comp[0]['name'] ?? 'สถานประกอบการ';
+                    $comp = $this->client->restGet(
+                        'companies',
+                        'id=eq.' . (int) $app['company_id'] . '&select=name,address,province,business_type'
+                    );
+                    $app['company'] = $comp[0] ?? [
+                        'name' => 'Company',
+                        'province' => '-',
+                        'business_type' => '-',
+                    ];
+                    $app['company_name'] = $app['company']['name'];
                 }
             }
-        } catch (\Exception) {
+            unset($app);
+        } catch (\Throwable) {
             $apps = [];
         }
 
@@ -122,5 +127,41 @@ final class ApplicationController
         return [
             'applications' => $this->applications->listForSupervisorUser($userId),
         ];
+    }
+
+    private function requireUserId(): string
+    {
+        $userId = (string) (Session::user()['id'] ?? '');
+        if ($userId === '') {
+            throw new \RuntimeException('Please sign in again before submitting an application.');
+        }
+
+        return $userId;
+    }
+
+    private function requireStudentId(string $userId): int
+    {
+        $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id&limit=1');
+        $studentId = (int) ($students[0]['id'] ?? 0);
+        if ($studentId <= 0) {
+            throw new \RuntimeException('Student profile was not found for the current account.');
+        }
+
+        return $studentId;
+    }
+
+    private function requireCompanyId(array $params): int
+    {
+        $companyId = (int) ($params['id'] ?? $_POST['company_id'] ?? 0);
+        if ($companyId === 0 && !empty($_SERVER['HTTP_REFERER'])) {
+            if (preg_match('#/student/companies/(\d+)#', (string) $_SERVER['HTTP_REFERER'], $m)) {
+                $companyId = (int) $m[1];
+            }
+        }
+        if ($companyId <= 0) {
+            throw new \RuntimeException('Company could not be determined for this application.');
+        }
+
+        return $companyId;
     }
 }
