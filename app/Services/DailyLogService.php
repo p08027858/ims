@@ -214,10 +214,11 @@ final class DailyLogService
         if (!in_array($decision, ['reviewed', 'revision_requested'], true)) {
             throw new AuthException('VALIDATION_ERROR', 'สถานะไม่ถูกต้อง');
         }
-        $rows = $this->client->restGet('daily_logs', 'id=eq.' . $logId . '&status=eq.submitted&select=id');
+        $rows = $this->client->restGet('daily_logs', 'id=eq.' . $logId . '&status=eq.submitted&select=id,internship_id');
         if (!isset($rows[0])) {
             throw new AuthException('VALIDATION_ERROR', 'ไม่พบบันทึกนี้ หรือถูกตรวจไปแล้ว');
         }
+        $this->assertReviewAuthority((int) $rows[0]['internship_id'], $reviewerUserId, $reviewerRole);
         $this->client->restUpdate('daily_logs', 'id=eq.' . $logId, [
             'status' => $decision,
             'reviewed_by' => $reviewerUserId,
@@ -225,6 +226,34 @@ final class DailyLogService
             'reviewed_at' => date('c'),
             'reviewer_comment' => trim($comment) ?: null,
         ]);
+    }
+
+    /** The service-role key bypasses RLS, so reviewer ownership must be checked here. */
+    private function assertReviewAuthority(int $internshipId, string $reviewerUserId, string $reviewerRole): void
+    {
+        if ($internshipId <= 0 || $reviewerUserId === '') {
+            throw new AuthException('FORBIDDEN', 'You are not allowed to review this daily log.');
+        }
+
+        if ($reviewerRole === 'company') {
+            $supervisors = $this->client->restGet('company_supervisors', 'user_id=eq.' . $reviewerUserId . '&select=company_id&limit=1');
+            $companyId = (int) ($supervisors[0]['company_id'] ?? 0);
+            $internship = $companyId > 0
+                ? $this->client->restGet('internships', 'id=eq.' . $internshipId . '&company_id=eq.' . $companyId . '&select=id&limit=1')
+                : [];
+        } elseif ($reviewerRole === 'teacher') {
+            $teachers = $this->client->restGet('teachers', 'user_id=eq.' . $reviewerUserId . '&select=id&limit=1');
+            $teacherId = (int) ($teachers[0]['id'] ?? 0);
+            $internship = $teacherId > 0
+                ? $this->client->restGet('internships', 'id=eq.' . $internshipId . '&teacher_id=eq.' . $teacherId . '&select=id&limit=1')
+                : [];
+        } else {
+            $internship = [];
+        }
+
+        if (!isset($internship[0])) {
+            throw new AuthException('FORBIDDEN', 'You are not allowed to review this daily log.');
+        }
     }
 
     /**

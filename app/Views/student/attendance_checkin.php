@@ -7,15 +7,14 @@ $today = $today ?? date('j F Y', strtotime('+543 years'));
 $companyName = $companyName ?? ($company['name'] ?? 'บริษัท โกลบอลเทค จำกัด');
 $companyLat = $companyLat ?? ($company['latitude'] ?? 18.163351);
 $companyLng = $companyLng ?? ($company['longitude'] ?? 97.933800);
-$allowedRadiusM = 1000000; // อนุญาตให้ลงเวลาได้ทุกจุดเพื่อการทดสอบ
 $minHoursBeforeCheckout = $minHoursBeforeCheckout ?? 4.0;
 $photoRequired = $photoRequired ?? false;
+$allowedRadiusM = (float) ($company['gps_radius_m'] ?? 100);
 $checkedIn = !empty($todayAttendance['check_in_time']) || ($checkedIn ?? false);
 $checkedOut = !empty($todayAttendance['check_out_time']) || ($checkedOut ?? false);
 $checkInAt = !empty($todayAttendance['check_in_time']) ? date('H:i', strtotime($todayAttendance['check_in_time'])) : ($checkInAt ?? null);
 $elapsedHours = $elapsedHours ?? 0;
-$canCheckout = true; // เปิดให้ทดสอบกดออกงานได้ทันที
-?>
+$canCheckout = $elapsedHours >= $minHoursBeforeCheckout;
 <div class="flex flex-col gap-6 max-w-lg mx-auto">
   <div class="flex flex-col gap-1">
     <h1 class="text-2xl font-bold text-slate-800 dark:text-white">ลงเวลาประจำวัน</h1>
@@ -108,7 +107,7 @@ $canCheckout = true; // เปิดให้ทดสอบกดออกง�
   }
   tick(); setInterval(tick, 1000);
 
-  let currentPosition = { latitude: 18.163351, longitude: 97.933800, accuracy: 10 };
+  let currentPosition = null;
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -116,7 +115,7 @@ $canCheckout = true; // เปิดให้ทดสอบกดออกง�
         currentPosition = pos.coords;
       },
       function () {
-        // Fallback default
+        showApiError('Unable to read GPS location. Please allow location access and try again.');
       },
       { enableHighAccuracy: true, timeout: 5000 }
     );
@@ -131,19 +130,32 @@ $canCheckout = true; // เปิดให้ทดสอบกดออกง�
 
   async function submitAttendance(type) {
     const payload = {
-      latitude: currentPosition.latitude,
-      longitude: currentPosition.longitude,
+      latitude: currentPosition?.latitude,
+      longitude: currentPosition?.longitude,
       type: type
     };
+    if (!currentPosition) {
+      showApiError('Waiting for GPS location. Please try again.');
+      return false;
+    }
     try {
       const resp = await fetch('/student/attendance', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': <?= json_encode(\App\Support\Session::csrfToken()) ?>
+        },
         body: JSON.stringify(payload)
       });
+      const result = await resp.json().catch(() => ({}));
+      if (!resp.ok || result.success !== true) {
+        showApiError(result?.error?.message || 'Unable to save attendance.');
+        return false;
+      }
       return true;
     } catch (e) {
-      return true;
+      showApiError('Unable to connect to the server. Please try again.');
+      return false;
     }
   }
 
@@ -151,7 +163,7 @@ $canCheckout = true; // เปิดให้ทดสอบกดออกง�
     const label = document.getElementById('checkin-btn-label');
     if (label) label.textContent = 'กำลังบันทึก...';
     this.disabled = true;
-    await submitAttendance('in');
+    if (!await submitAttendance('in')) { this.disabled = false; return; }
     document.getElementById('success-detail').textContent = 'ลงเวลาเข้างานสำเร็จ 🎉';
     document.getElementById('checkin-success').classList.remove('hidden');
     setTimeout(() => { window.location.reload(); }, 1200);
@@ -161,7 +173,7 @@ $canCheckout = true; // เปิดให้ทดสอบกดออกง�
     const label = document.getElementById('checkout-btn-label');
     if (label) label.textContent = 'กำลังบันทึก...';
     this.disabled = true;
-    await submitAttendance('out');
+    if (!await submitAttendance('out')) { this.disabled = false; return; }
     document.getElementById('success-title').textContent = 'เยี่ยมมาก!';
     document.getElementById('success-detail').textContent = 'ลงเวลาออกงานสำเร็จ 🎉';
     document.getElementById('checkin-success').classList.remove('hidden');

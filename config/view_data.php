@@ -16,6 +16,7 @@ use App\Controllers\BatchController;
 use App\Controllers\CompanyController;
 use App\Controllers\CompanyProfileController;
 use App\Controllers\DailyLogController;
+use App\Controllers\DashboardController;
 use App\Controllers\EvaluationController;
 use App\Controllers\EvaluationTemplateController;
 use App\Controllers\ImportController;
@@ -23,6 +24,7 @@ use App\Controllers\InternshipController;
 use App\Controllers\LeaveController;
 use App\Controllers\NotificationController;
 use App\Controllers\OrgController;
+use App\Controllers\ProfileController;
 use App\Controllers\ReportController;
 use App\Controllers\SettingsController;
 use App\Controllers\StudentTimelineController;
@@ -41,6 +43,15 @@ return [
     '/admin/users' => [CompanyController::class, 'pendingApprovalsData'],
     '/admin/users/{id}' => [CompanyController::class, 'userApprovalDetailData'],
     '/company/profile' => [CompanyProfileController::class, 'gpsSetupData'],
+
+    // Dashboards + student profile — the last views that still rendered their Phase-0 mock
+    // fallbacks whenever no loader was wired. See App\Controllers\DashboardController and
+    // App\Controllers\ProfileController.
+    '/student/dashboard' => [DashboardController::class, 'studentData'],
+    '/company/dashboard' => [DashboardController::class, 'companyData'],
+    '/admin/dashboard' => [DashboardController::class, 'adminData'],
+    '/super-admin/dashboard' => [DashboardController::class, 'adminData'],
+    '/student/profile' => [ProfileController::class, 'profilePageData'],
 
     // Phase 4 — Internship Application & Matching
     '/student/companies' => [ApplicationController::class, 'companySearchData'],

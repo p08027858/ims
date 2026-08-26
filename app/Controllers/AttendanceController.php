@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Services\ApiException;
 use App\Services\AttendanceService;
+use App\Services\SettingsService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
 
@@ -19,133 +21,227 @@ final class AttendanceController
 
     public function checkinPageData(array $params): array
     {
-        $user = Session::user();
-        $userId = (string) ($user['id'] ?? '');
-
+        $userId = (string) (Session::user()['id'] ?? '');
+        $settings = new SettingsService();
+        $context = null;
         $internship = null;
-        try {
-            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
-            $studentId = $students[0]['id'] ?? null;
-
-            if ($studentId) {
-                $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=1&select=*');
-                $internship = $internships[0] ?? null;
-            }
-
-            if (!$internship) {
-                $allInternships = $this->client->restGet('internships', 'deleted_at=is.null&order=id.desc&limit=1&select=*');
-                $internship = $allInternships[0] ?? null;
-            }
-
-            if ($internship && !empty($internship['company_id'])) {
-                $comp = $this->client->restGet('companies', 'id=eq.' . $internship['company_id'] . '&select=*');
-                $internship['company'] = $comp[0] ?? [
-                    'name' => 'สถานประกอบการ',
-                    'latitude' => 18.163351,
-                    'longitude' => 97.933800,
-                    'gps_radius_m' => 1000000
-                ];
-                $internship['company_name'] = $internship['company']['name'] ?? 'สถานประกอบการ';
-            }
-        } catch (\Exception $e) {
-            // ignore
-        }
-
+        $company = null;
         $todayAttendance = null;
-        $today = date('Y-m-d');
+
         try {
-            if ($internship) {
-                $att = $this->client->restGet('attendance_logs', 'internship_id=eq.' . $internship['id'] . '&date=eq.' . $today . '&deleted_at=is.null&select=*');
-                $todayAttendance = $att[0] ?? null;
+            $context = $this->attendance->getActiveInternshipContext($userId);
+            if ($context !== null) {
+                $internship = $this->getInternshipById((int) $context['id']);
+                $company = [
+                    'name' => (string) ($context['company_name'] ?? ''),
+                    'latitude' => (float) $context['latitude'],
+                    'longitude' => (float) $context['longitude'],
+                    'gps_radius_m' => (float) $context['gps_radius_m'],
+                ];
+                $todayAttendance = $this->normalizeAttendanceRow(
+                    $this->attendance->getTodayAttendance((int) $context['id'])
+                );
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable) {
+            $context = null;
+            $internship = null;
+            $company = null;
             $todayAttendance = null;
         }
 
+        $defaultRadius = (float) $settings->getInt('default_gps_radius_m', 100);
+        $minHoursBeforeCheckout = $context !== null
+            ? (float) $context['min_hours_before_checkout']
+            : (float) $settings->getFloat('min_hours_before_checkout', 4.0);
+        $allowedRadiusM = $company !== null
+            ? (float) ($company['gps_radius_m'] ?? $defaultRadius)
+            : $defaultRadius;
+        $elapsedHours = $this->elapsedHoursFromAttendance($todayAttendance);
+
         return [
+            'noActiveInternship' => $context === null,
+            'today' => date('j F Y', strtotime('+543 years')),
+            'companyName' => (string) ($company['name'] ?? ''),
+            'companyLat' => $company['latitude'] ?? null,
+            'companyLng' => $company['longitude'] ?? null,
+            'allowedRadiusM' => $allowedRadiusM,
+            'minHoursBeforeCheckout' => $minHoursBeforeCheckout,
+            'photoRequired' => false,
+            'elapsedHours' => $elapsedHours,
+            'canCheckout' => $elapsedHours >= $minHoursBeforeCheckout,
             'internship' => $internship,
             'currentInternship' => $internship,
-            'company' => $internship['company'] ?? null,
+            'company' => $company,
             'todayAttendance' => $todayAttendance,
             'attendance' => $todayAttendance,
-            'allowedRadiusM' => 1000000,
         ];
     }
 
-    /**
-     * Action: บันทึกเวลาเข้างาน (POST /student/attendance/check-in หรือ /student/attendance)
-     */
     public function checkIn(array $params): void
     {
-        $this->handleCheckinAction('in');
+        $this->handleAttendanceAction('in');
     }
 
     public function checkOut(array $params): void
     {
-        $this->handleCheckinAction('out');
+        $this->handleAttendanceAction('out');
     }
 
-    private function handleCheckinAction(string $type): void
+    public function historyPageData(array $params): array
     {
-        $user = Session::user();
-        $userId = (string) ($user['id'] ?? '');
-        $lat = (float) ($_POST['latitude'] ?? $_POST['lat'] ?? 18.163351);
-        $lng = (float) ($_POST['longitude'] ?? $_POST['lng'] ?? 97.933800);
-        $today = date('Y-m-d');
-        $now = date('c');
+        $records = [];
+        $summary = [
+            'total_hours_logged' => 0,
+            'total_required_hours' => 0,
+            'percent_complete' => 0,
+            'days_present' => 0,
+            'days_late' => 0,
+            'days_absent' => 0,
+        ];
 
         try {
-            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
-            $studentId = $students[0]['id'] ?? 1;
+            $context = $this->attendance->getActiveInternshipContext((string) (Session::user()['id'] ?? ''));
+            if ($context !== null) {
+                $internship = $this->getInternshipById((int) $context['id']);
+                $requiredHours = max(0, (int) ($internship['total_required_hours'] ?? 0));
+                $records = $this->attendance->listHistory((int) $context['id']);
+                $summary = $this->attendance->getSummary((int) $context['id'], $requiredHours);
+            }
+        } catch (\Throwable) {
+            $records = [];
+        }
 
-            $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=1&select=id');
-            $internshipId = $internships[0]['id'] ?? 3;
+        return [
+            'summary' => $summary,
+            'records' => $records,
+            'logs' => $records,
+        ];
+    }
 
-            $existing = $this->client->restGet('attendance_logs', 'internship_id=eq.' . $internshipId . '&date=eq.' . $today . '&deleted_at=is.null&select=*');
+    private function handleAttendanceAction(string $defaultType): void
+    {
+        $input = $this->requestInput();
+        $type = ($input['type'] ?? $defaultType) === 'out' ? 'out' : 'in';
+        $lat = (float) ($input['latitude'] ?? $input['lat'] ?? 0);
+        $lng = (float) ($input['longitude'] ?? $input['lng'] ?? 0);
+        $accuracyM = (float) ($input['accuracy_m'] ?? $input['accuracy'] ?? 0);
+        $photoBase64 = isset($input['photo']) && is_string($input['photo']) ? $input['photo'] : null;
 
-            if (empty($existing)) {
-                $this->client->restInsert('attendance_logs', [
-                    'internship_id' => $internshipId,
-                    'date' => $today,
-                    'check_in_time' => $now,
-                    'check_in_latitude' => $lat,
-                    'check_in_longitude' => $lng,
-                    'status' => 'present',
-                ]);
-            } else {
-                $logId = $existing[0]['id'];
-                $this->client->restUpdate('attendance_logs', 'id=eq.' . $logId, [
-                    'check_out_time' => $now,
-                    'check_out_latitude' => $lat,
-                    'check_out_longitude' => $lng,
-                ]);
+        try {
+            $context = $this->attendance->getActiveInternshipContext((string) (Session::user()['id'] ?? ''));
+            if ($context === null) {
+                throw new ApiException(422, 'NO_ACTIVE_INTERNSHIP', 'No active internship found.');
             }
 
-            if (str_contains($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') || isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode(['success' => true]);
-                exit;
+            $data = $type === 'out'
+                ? $this->attendance->checkout($context, $lat, $lng, $accuracyM)
+                : $this->attendance->checkin($context, $lat, $lng, $accuracyM, $photoBase64);
+
+            if ($this->wantsJson()) {
+                $this->respondJson(200, ['success' => true, 'data' => $data]);
             }
-        } catch (\Exception $e) {
-            // ignore
+        } catch (ApiException $e) {
+            if ($this->wantsJson()) {
+                $this->respondJson($e->httpStatus, [
+                    'success' => false,
+                    'error' => [
+                        'code' => $e->errorCode,
+                        'message' => $e->getMessage(),
+                        'details' => $e->details,
+                    ],
+                ]);
+            }
+            Session::flashError($e->getMessage());
+        } catch (\Throwable $e) {
+            if ($this->wantsJson()) {
+                $this->respondJson(422, [
+                    'success' => false,
+                    'error' => [
+                        'code' => 'ATTENDANCE_FAILED',
+                        'message' => $e->getMessage(),
+                    ],
+                ]);
+            }
+            Session::flashError($e->getMessage());
         }
 
         header('Location: /student/attendance');
         exit;
     }
 
-    public function historyPageData(array $params): array
+    /** @return array<string, mixed> */
+    private function requestInput(): array
     {
-        $records = [];
-        try {
-            $records = $this->client->restGet('attendance_logs', 'deleted_at=is.null&order=date.desc&limit=30&select=*');
-        } catch (\Exception) {
-            $records = [];
+        if ($this->wantsJson()) {
+            $decoded = json_decode((string) file_get_contents('php://input'), true);
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return $_POST;
+    }
+
+    private function wantsJson(): bool
+    {
+        return str_contains($_SERVER['CONTENT_TYPE'] ?? '', 'application/json')
+            || isset($_SERVER['HTTP_X_REQUESTED_WITH']);
+    }
+
+    private function respondJson(int $status, array $payload): void
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    private function getInternshipById(int $internshipId): ?array
+    {
+        $rows = $this->client->restGet(
+            'internships',
+            'id=eq.' . $internshipId . '&deleted_at=is.null&limit=1&select=*'
+        );
+
+        return $rows[0] ?? null;
+    }
+
+    private function normalizeAttendanceRow(?array $row): ?array
+    {
+        if ($row === null) {
+            return null;
         }
 
         return [
-            'records' => $records,
-            'logs' => $records,
+            'id' => $row['id'] ?? null,
+            'date' => (string) ($row['work_date'] ?? date('Y-m-d')),
+            'check_in_time' => $row['check_in_at'] ?? null,
+            'check_out_time' => $row['check_out_at'] ?? null,
+            'status' => $row['day_status'] ?? ($row['check_in_status'] ?? null),
+            'check_in_status' => $row['check_in_status'] ?? null,
+            'check_out_status' => $row['check_out_status'] ?? null,
+            'total_hours' => isset($row['total_hours']) ? (float) $row['total_hours'] : null,
         ];
     }
+
+    private function elapsedHoursFromAttendance(?array $attendance): float
+    {
+        if ($attendance === null || empty($attendance['check_in_time'])) {
+            return 0.0;
+        }
+
+        if (isset($attendance['total_hours']) && $attendance['total_hours'] !== null) {
+            return round((float) $attendance['total_hours'], 2);
+        }
+
+        $inTs = strtotime((string) $attendance['check_in_time']);
+        $outTs = !empty($attendance['check_out_time'])
+            ? strtotime((string) $attendance['check_out_time'])
+            : time();
+
+        if ($inTs === false || $outTs === false || $outTs < $inTs) {
+            return 0.0;
+        }
+
+        return round(($outTs - $inTs) / 3600, 2);
+    }
 }
+

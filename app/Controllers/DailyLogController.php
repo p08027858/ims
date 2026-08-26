@@ -2,137 +2,174 @@
 
 namespace App\Controllers;
 
+use App\Services\AuthException;
+use App\Services\DailyLogService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
 
 final class DailyLogController
 {
+    private DailyLogService $logs;
     private SupabaseClient $client;
 
     public function __construct()
     {
         $this->client = new SupabaseClient();
+        $this->logs = new DailyLogService($this->client);
     }
 
-    /**
-     * ดึงเฉพาะบันทึกของนักศึกษาที่ล็อกอินอยู่
-     */
     public function listData(array $params): array
     {
-        $user = Session::user();
-        $userId = (string) ($user['id'] ?? '');
-        $studentId = $this->resolveStudentId($userId);
-        
-        $logs = [];
         try {
-            if ($studentId) {
-                $logs = $this->client->restGet('daily_logs', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=50&select=*');
-            } else {
-                $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=id.desc&limit=50&select=*');
+            $internshipId = $this->activeInternshipId();
+            if ($internshipId === null) {
+                return ['logs' => [], 'dailyLogs' => [], 'items' => [], 'noActiveInternship' => true];
             }
-        } catch (\Exception $e) {
-            $logs = [];
+            $logs = $this->logs->listForStudent($internshipId);
+            return ['logs' => $logs, 'dailyLogs' => $logs, 'items' => $logs, 'noActiveInternship' => false];
+        } catch (\Throwable) {
+            return ['logs' => [], 'dailyLogs' => [], 'items' => [], 'noActiveInternship' => true];
         }
-
-        return [
-            'logs' => $logs,
-            'dailyLogs' => $logs,
-            'items' => $logs,
-            'noActiveInternship' => false,
-        ];
-    }
-
-    /**
-     * หน้าตรวจบันทึกประจำวันของสถานประกอบการ / อาจารย์
-     */
-    public function reviewPageData(array $params): array
-    {
-        $logs = [];
-        try {
-            $logs = $this->client->restGet('daily_logs', 'deleted_at=is.null&order=log_date.desc,id.desc&limit=50&select=*') ?? [];
-        } catch (\Throwable $e) {
-            $logs = [];
-        }
-
-        return [
-            'logs' => $logs,
-            'dailyLogs' => $logs,
-            'items' => $logs,
-            'pendingCount' => count(array_filter($logs, fn($item) => ($item['status'] ?? '') === 'submitted')),
-        ];
     }
 
     public function newFormData(array $params): array
     {
-        return [
-            'noActiveInternship' => false,
-            'today' => date('Y-m-d'),
-        ];
+        return ['noActiveInternship' => $this->activeInternshipId() === null, 'today' => date('Y-m-d')];
     }
 
-    /**
-     * บันทึกข้อมูลผูกกับ student_id และ internship_id ของผู้ใช้จริง
-     */
+    public function editFormData(array $params): array
+    {
+        $internshipId = $this->activeInternshipId();
+        $log = $internshipId === null ? null : $this->logs->getLogById((int) ($params['id'] ?? 0), $internshipId);
+        return ['log' => $log, 'noActiveInternship' => $internshipId === null || $log === null, 'today' => date('Y-m-d')];
+    }
+
     public function store(array $params): void
     {
-        $user = Session::user();
-        $userId = (string) ($user['id'] ?? '');
-        $studentId = $this->resolveStudentId($userId) ?? 1;
-        $internshipId = $this->resolveInternshipId($studentId) ?? 3;
-
-        $raw = file_get_contents('php://input');
-        $input = json_decode($raw, true) ?? $_POST;
-
-        $title = trim((string) ($input['title'] ?? ''));
-        $description = trim((string) ($input['activity_description'] ?? ''));
-        $problems = trim((string) ($input['problems_encountered'] ?? ''));
-        $learning = trim((string) ($input['learning_outcomes'] ?? ''));
-        $logDate = trim((string) ($input['log_date'] ?? date('Y-m-d')));
-        $photoUrl = $input['photo_base64'] ?? null;
-
-        $record = [
-            'internship_id' => (int) $internshipId,
-            'student_id' => (int) $studentId,
-            'log_date' => !empty($logDate) ? $logDate : date('Y-m-d'),
-            'title' => !empty($title) ? $title : 'บันทึกการปฏิบัติงาน',
-            'tasks_performed' => !empty($description) ? $description : $title,
-            'activity_description' => $description,
-            'problems_encountered' => $problems,
-            'learning_outcomes' => $learning,
-            'photo_url' => $photoUrl,
-            'status' => 'submitted',
-        ];
-
         try {
-            $this->client->restInsert('daily_logs', $record);
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['success' => true]);
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            $this->logs->saveOrSubmit($this->requireActiveInternshipId(), $this->submissionData(), [], true);
+            $this->respondJson(200, ['success' => true]);
+        } catch (AuthException $e) {
+            $this->respondJson(422, ['success' => false, 'error' => ['code' => $e->errorCode(), 'message' => $e->getMessage()]]);
+        } catch (\Throwable) {
+            $this->respondJson(500, ['success' => false, 'error' => ['code' => 'DAILY_LOG_SAVE_FAILED', 'message' => 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง']]);
         }
+    }
+
+    public function update(array $params): void
+    {
+        try {
+            $logId = (int) ($params['id'] ?? 0);
+            if ($logId <= 0) {
+                throw new AuthException('VALIDATION_ERROR', 'ไม่พบบันทึกที่ต้องการแก้ไข');
+            }
+            $this->logs->updateById($logId, $this->requireActiveInternshipId(), $this->submissionData(), [], true);
+        } catch (AuthException $e) {
+            Session::flashError($e->getMessage());
+        } catch (\Throwable) {
+            Session::flashError('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+        }
+        header('Location: /student/daily-logs');
         exit;
     }
 
-    private function resolveStudentId(string $userId): ?int
+    public function reviewPageData(array $params): array
     {
-        if (empty($userId)) return null;
         try {
-            $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id&limit=1');
-            return !empty($students[0]['id']) ? (int) $students[0]['id'] : null;
+            $user = Session::user() ?? [];
+            $role = (string) ($user['role'] ?? '');
+            $userId = (string) ($user['id'] ?? '');
+            $log = match ($role) {
+                'company' => $this->logs->findOldestPendingForCompany($this->companyIdForUser($userId)),
+                'teacher' => $this->logs->findOldestPendingForTeacher($this->teacherIdForUser($userId)),
+                default => null,
+            };
+            if ($log !== null) {
+                $log['date'] = (string) ($log['log_date'] ?? '');
+                $log['attachments'] = array_map(static fn (array $file): array => [
+                    'name' => (string) ($file['file_name'] ?? ''),
+                    'path' => (string) ($file['file_path'] ?? ''),
+                ], $log['attachments'] ?? []);
+            }
+            return ['log' => $log, 'student' => $log === null ? null : ['name' => (string) ($log['student_name'] ?? '-')]];
         } catch (\Throwable) {
-            return null;
+            return ['log' => null, 'student' => null];
         }
     }
 
-    private function resolveInternshipId(int $studentId): ?int
+    public function review(array $params): void
     {
+        $user = Session::user() ?? [];
+        $role = (string) ($user['role'] ?? '');
+        $redirect = $role === 'teacher' ? '/teacher/daily-logs' : '/company/daily-logs';
         try {
-            $internships = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&deleted_at=is.null&order=id.desc&limit=1&select=id');
-            return !empty($internships[0]['id']) ? (int) $internships[0]['id'] : null;
+            $this->logs->review(
+                (int) ($_POST['daily_log_id'] ?? 0),
+                (string) ($_POST['status'] ?? ''),
+                (string) ($_POST['reviewer_comment'] ?? ''),
+                (string) ($user['id'] ?? ''),
+                $role
+            );
+        } catch (AuthException $e) {
+            Session::flashError($e->getMessage());
         } catch (\Throwable) {
-            return null;
+            Session::flashError('ไม่สามารถบันทึกผลการตรวจได้ กรุณาลองใหม่อีกครั้ง');
         }
+        header('Location: ' . $redirect);
+        exit;
+    }
+
+    private function activeInternshipId(): ?int
+    {
+        return $this->logs->getActiveInternshipId((string) ((Session::user() ?? [])['id'] ?? ''));
+    }
+
+    private function requireActiveInternshipId(): int
+    {
+        $internshipId = $this->activeInternshipId();
+        if ($internshipId === null) {
+            throw new AuthException('VALIDATION_ERROR', 'ไม่พบการฝึกงานที่กำลังดำเนินอยู่');
+        }
+        return $internshipId;
+    }
+
+    private function submissionData(): array
+    {
+        $raw = file_get_contents('php://input');
+        $input = json_decode($raw, true);
+        $input = is_array($input) ? $input : $_POST;
+        return [
+            'work_description' => trim((string) ($input['work_description'] ?? $input['activity_description'] ?? '')),
+            'learning_outcome' => trim((string) ($input['learning_outcome'] ?? $input['learning_outcomes'] ?? '')),
+            'problem_found' => trim((string) ($input['problem_found'] ?? $input['problems_encountered'] ?? '')),
+        ];
+    }
+
+    private function companyIdForUser(string $userId): int
+    {
+        $rows = $this->client->restGet('company_supervisors', 'user_id=eq.' . $userId . '&select=company_id&limit=1');
+        $companyId = (int) ($rows[0]['company_id'] ?? 0);
+        if ($companyId <= 0) {
+            throw new AuthException('FORBIDDEN', 'ไม่พบบริษัทที่คุณมีสิทธิ์ตรวจบันทึก');
+        }
+        return $companyId;
+    }
+
+    private function teacherIdForUser(string $userId): int
+    {
+        $rows = $this->client->restGet('teachers', 'user_id=eq.' . $userId . '&select=id&limit=1');
+        $teacherId = (int) ($rows[0]['id'] ?? 0);
+        if ($teacherId <= 0) {
+            throw new AuthException('FORBIDDEN', 'ไม่พบข้อมูลอาจารย์นิเทศของบัญชีนี้');
+        }
+        return $teacherId;
+    }
+
+    private function respondJson(int $status, array $payload): never
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+        exit;
     }
 }

@@ -25,6 +25,7 @@ use App\Controllers\InternshipController;
 use App\Controllers\LeaveController;
 use App\Controllers\NotificationController;
 use App\Controllers\OrgController;
+use App\Controllers\ProfileController;
 use App\Controllers\ReportController;
 use App\Controllers\SettingsController;
 use App\Controllers\SuperAdminAdminController;
@@ -64,6 +65,7 @@ return [
     ['POST', '/attendance/checkin', [AttendanceController::class, 'checkIn'], 'student'],
     ['POST', '/attendance/checkout', [AttendanceController::class, 'checkOut'], 'student'],
     ['POST', '/student/attendance', [AttendanceController::class, 'checkIn'], 'student'],
+    ['POST', '/student/profile', [ProfileController::class, 'update'], 'student'],
 
     // Phase 6 — Daily Log & Leave Request
     ['POST', '/student/daily-logs', [DailyLogController::class, 'store'], 'student'],
