@@ -49,8 +49,7 @@ final class ApplicationService
     public function listForSupervisorUser(string $userId): array
     {
         try {
-            $supervisors = $this->client->restGet('company_supervisors', 'user_id=eq.' . $userId . '&select=company_id');
-            $companyId = $supervisors[0]['company_id'] ?? null;
+            $companyId = $this->resolveCompanyIdForSupervisor($userId);
 
             if (!$companyId) {
                 return [];
@@ -111,5 +110,42 @@ final class ApplicationService
 
             throw new \RuntimeException('You have already applied to this company.');
         }
+    }
+
+    public function decideForSupervisorUser(int $applicationId, string $userId, string $decision): void
+    {
+        if (!in_array($decision, ['accepted', 'rejected'], true)) {
+            throw new AuthException('VALIDATION_ERROR', 'Invalid application decision.');
+        }
+
+        $companyId = $this->resolveCompanyIdForSupervisor($userId);
+        if ($companyId <= 0) {
+            throw new AuthException('VALIDATION_ERROR', 'Company profile was not found for this account.');
+        }
+
+        $rows = $this->client->restGet(
+            'internship_applications',
+            'id=eq.' . $applicationId . '&company_id=eq.' . $companyId . '&deleted_at=is.null&select=id,status'
+        );
+        if (!isset($rows[0])) {
+            throw new AuthException('VALIDATION_ERROR', 'Application was not found for your company.');
+        }
+
+        $currentStatus = (string) ($rows[0]['status'] ?? '');
+        if ($currentStatus !== 'pending') {
+            throw new AuthException('VALIDATION_ERROR', 'This application has already been processed.');
+        }
+
+        $this->client->restUpdate(
+            'internship_applications',
+            'id=eq.' . $applicationId,
+            ['status' => $decision]
+        );
+    }
+
+    private function resolveCompanyIdForSupervisor(string $userId): int
+    {
+        $supervisors = $this->client->restGet('company_supervisors', 'user_id=eq.' . $userId . '&select=company_id&limit=1');
+        return (int) ($supervisors[0]['company_id'] ?? 0);
     }
 }

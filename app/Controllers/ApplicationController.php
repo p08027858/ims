@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Services\ApplicationService;
+use App\Services\AuditLogger;
+use App\Services\AuthException;
 use App\Services\CompanyService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
@@ -128,7 +130,33 @@ final class ApplicationController
 
         return [
             'applications' => $this->applications->listForSupervisorUser($userId),
+            'flashError' => Session::pullFlashError(),
         ];
+    }
+
+    public function decide(array $params): void
+    {
+        $user = Session::user();
+
+        try {
+            $decision = ($_POST['status'] ?? '') === 'rejected' ? 'rejected' : 'accepted';
+            $this->applications->decideForSupervisorUser((int) $params['id'], (string) ($user['id'] ?? ''), $decision);
+            (new AuditLogger())->log(
+                (string) ($user['id'] ?? ''),
+                (string) ($user['role'] ?? ''),
+                $decision === 'rejected' ? 'reject' : 'approve',
+                'internship_applications',
+                'internship_applications',
+                (int) $params['id'],
+                ['status' => 'pending'],
+                ['status' => $decision]
+            );
+        } catch (AuthException $e) {
+            Session::flashError($e->getMessage());
+        }
+
+        header('Location: /company/applications');
+        exit;
     }
 
     private function requireUserId(): string
