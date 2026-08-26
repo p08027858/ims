@@ -15,6 +15,7 @@ $checkedOut = !empty($todayAttendance['check_out_time']) || ($checkedOut ?? fals
 $checkInAt = !empty($todayAttendance['check_in_time']) ? date('H:i', strtotime($todayAttendance['check_in_time'])) : ($checkInAt ?? null);
 $elapsedHours = $elapsedHours ?? 0;
 $canCheckout = $elapsedHours >= $minHoursBeforeCheckout;
+?>
 <div class="flex flex-col gap-6 max-w-lg mx-auto">
   <div class="flex flex-col gap-1">
     <h1 class="text-2xl font-bold text-slate-800 dark:text-white">ลงเวลาประจำวัน</h1>
