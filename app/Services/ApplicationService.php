@@ -95,4 +95,21 @@ final class ApplicationService
             return [];
         }
     }
+
+    public function assertCanApply(int $studentId, int $companyId): void
+    {
+        $existing = $this->client->restGet(
+            'internship_applications',
+            'student_id=eq.' . $studentId . '&company_id=eq.' . $companyId . '&deleted_at=is.null&order=id.desc&select=id,status'
+        );
+
+        foreach ($existing as $application) {
+            $status = strtolower((string) ($application['status'] ?? ''));
+            if ($status === 'rejected' || $status === 'cancelled') {
+                continue;
+            }
+
+            throw new \RuntimeException('You have already applied to this company.');
+        }
+    }
 }

@@ -66,6 +66,8 @@ final class ApplicationController
             $position = trim((string) ($_POST['position'] ?? $_POST['job_title'] ?? ''));
             $notes = trim((string) ($_POST['notes'] ?? $_POST['cover_letter'] ?? ''));
 
+            $this->applications->assertCanApply($studentId, $companyId);
+
             $this->client->restInsert('internship_applications', [
                 'student_id' => $studentId,
                 'company_id' => $companyId,
