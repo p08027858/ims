@@ -83,13 +83,50 @@ final class ApplicationService
             ) ?? [];
 
             if (empty($apps)) {
-                return $this->client->restGet(
-                    'internships',
-                    'teacher_id=is.null&deleted_at=is.null&order=id.desc&limit=100&select=*'
-                ) ?? [];
+                return [];
             }
 
-            return $apps;
+            $items = [];
+            foreach ($apps as $app) {
+                $student = [];
+                $company = [];
+                $department = [];
+
+                if (!empty($app['student_id'])) {
+                    $student = $this->client->restGet(
+                        'students',
+                        'id=eq.' . (int) $app['student_id'] . '&select=first_name,last_name,student_code,department_id&limit=1'
+                    )[0] ?? [];
+                }
+
+                if (!empty($student['department_id'])) {
+                    $department = $this->client->restGet(
+                        'departments',
+                        'id=eq.' . (int) $student['department_id'] . '&select=name_th,name_en&limit=1'
+                    )[0] ?? [];
+                }
+
+                if (!empty($app['company_id'])) {
+                    $company = $this->client->restGet(
+                        'companies',
+                        'id=eq.' . (int) $app['company_id'] . '&select=name,address&limit=1'
+                    )[0] ?? [];
+                }
+
+                $studentName = trim((string) (($student['first_name'] ?? '') . ' ' . ($student['last_name'] ?? '')));
+                $items[] = [
+                    'application_id' => (int) ($app['id'] ?? 0),
+                    'student_name' => $studentName !== '' ? $studentName : '-',
+                    'student_code' => (string) ($student['student_code'] ?? '-'),
+                    'department_name' => (string) ($department['name_th'] ?? $department['name_en'] ?? '-'),
+                    'company_name' => (string) ($company['name'] ?? '-'),
+                    'company_address' => (string) ($company['address'] ?? '-'),
+                    'position_title' => (string) ($app['position'] ?? $app['position_title'] ?? '-'),
+                    'status' => (string) ($app['status'] ?? ''),
+                ];
+            }
+
+            return $items;
         } catch (\Throwable $e) {
             return [];
         }
