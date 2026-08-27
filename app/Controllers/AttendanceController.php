@@ -196,10 +196,17 @@ final class AttendanceController
 
     private function getInternshipById(int $internshipId): ?array
     {
-        $rows = $this->client->restGet(
-            'internships',
-            'id=eq.' . $internshipId . '&deleted_at=is.null&limit=1&select=*'
-        );
+        try {
+            $rows = $this->client->restGet(
+                'internships',
+                'id=eq.' . $internshipId . '&deleted_at=is.null&limit=1&select=*'
+            );
+        } catch (\Throwable) {
+            $rows = $this->client->restGet(
+                'internships',
+                'id=eq.' . $internshipId . '&limit=1&select=*'
+            );
+        }
 
         return $rows[0] ?? null;
     }

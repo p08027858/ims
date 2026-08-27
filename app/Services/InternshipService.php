@@ -91,10 +91,7 @@ final class InternshipService
             return null;
         }
 
-        $rows = $this->client->restGet(
-            'internships',
-            'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&deleted_at=is.null&select=*'
-        );
+        $rows = $this->findCurrentInternshipsForStudent($studentId);
         if (empty($rows)) {
             return null;
         }
@@ -365,6 +362,17 @@ final class InternshipService
         $endsOk = $endDate === '' || $endDate >= $today;
 
         return $startsOk && $endsOk;
+    }
+
+    private function findCurrentInternshipsForStudent(int $studentId): array
+    {
+        $baseFilter = 'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&select=*';
+
+        try {
+            return $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&deleted_at=is.null&select=*');
+        } catch (SupabaseException) {
+            return $this->client->restGet('internships', $baseFilter);
+        }
     }
 }
 
