@@ -151,7 +151,7 @@ final class ApplicationService
 
     public function decideForSupervisorUser(int $applicationId, string $userId, string $decision): void
     {
-        if (!in_array($decision, ['accepted', 'rejected'], true)) {
+        if (!in_array($decision, ['accepted', 'approved', 'rejected'], true)) {
             throw new AuthException('VALIDATION_ERROR', 'Invalid application decision.');
         }
 
@@ -176,7 +176,7 @@ final class ApplicationService
         $this->client->restUpdate(
             'internship_applications',
             'id=eq.' . $applicationId,
-            ['status' => $decision]
+            ['status' => $decision === 'accepted' ? 'approved' : $decision]
         );
     }
 
@@ -186,3 +186,4 @@ final class ApplicationService
         return (int) ($supervisors[0]['company_id'] ?? 0);
     }
 }
+

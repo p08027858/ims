@@ -79,9 +79,12 @@ final class InternshipService
      */
     public function createFromApplication(int $applicationId, array $data): void
     {
-        $apps = $this->client->restGet('internship_applications', 'id=eq.' . $applicationId . '&status=eq.accepted&select=*');
+        $apps = $this->client->restGet(
+            'internship_applications',
+            'id=eq.' . $applicationId . '&status=in.(accepted,approved)&select=*'
+        );
         if (!isset($apps[0])) {
-            throw new AuthException('VALIDATION_ERROR', 'ไม่พบใบสมัครนี้ หรือยังไม่ถูกตอบรับจากบริษัท');
+            throw new AuthException('VALIDATION_ERROR', 'Application was not found or has not been approved by the company yet.');
         }
         $app = $apps[0];
 
@@ -99,7 +102,7 @@ final class InternshipService
                 'teacher_id' => $teacherId,
                 'batch_id' => $app['batch_id'],
                 'application_id' => $applicationId,
-                'position_title' => $app['position_title'],
+                'position_title' => $app['position_title'] ?? $app['position'] ?? null,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'total_required_hours' => (int) ($data['total_required_hours'] ?? 400),
@@ -292,3 +295,4 @@ final class InternshipService
         return $rows[0];
     }
 }
+

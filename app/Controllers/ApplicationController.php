@@ -139,7 +139,7 @@ final class ApplicationController
         $user = Session::user();
 
         try {
-            $decision = ($_POST['status'] ?? '') === 'rejected' ? 'rejected' : 'accepted';
+            $decision = ($_POST['status'] ?? '') === 'rejected' ? 'rejected' : 'approved';
             $this->applications->decideForSupervisorUser((int) $params['id'], (string) ($user['id'] ?? ''), $decision);
             (new AuditLogger())->log(
                 (string) ($user['id'] ?? ''),
@@ -195,3 +195,4 @@ final class ApplicationController
         return $companyId;
     }
 }
+
