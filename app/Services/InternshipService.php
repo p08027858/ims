@@ -9,6 +9,7 @@ namespace App\Services;
 final class InternshipService
 {
     private SupabaseClient $client;
+    private const CURRENT_STATUSES = ['active', 'approved', 'ongoing'];
 
     public function __construct(?SupabaseClient $client = null)
     {
@@ -71,6 +72,58 @@ final class InternshipService
     public function listTeachers(): array
     {
         return (new TeacherService($this->client))->listTeachers();
+    }
+
+    public function getCurrentInternshipForStudentUser(string $userId): ?array
+    {
+        $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id&limit=1');
+        $studentId = (int) ($students[0]['id'] ?? 0);
+        if ($studentId <= 0) {
+            return null;
+        }
+
+        return $this->getCurrentInternshipForStudentId($studentId);
+    }
+
+    public function getCurrentInternshipForStudentId(int $studentId): ?array
+    {
+        if ($studentId <= 0) {
+            return null;
+        }
+
+        $rows = $this->client->restGet(
+            'internships',
+            'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&deleted_at=is.null&select=*'
+        );
+        if (empty($rows)) {
+            return null;
+        }
+
+        usort($rows, function (array $a, array $b): int {
+            $statusOrder = array_flip(self::CURRENT_STATUSES);
+            $statusA = $statusOrder[(string) ($a['status'] ?? '')] ?? 999;
+            $statusB = $statusOrder[(string) ($b['status'] ?? '')] ?? 999;
+            if ($statusA !== $statusB) {
+                return $statusA <=> $statusB;
+            }
+
+            $startA = strtotime((string) ($a['start_date'] ?? '')) ?: 0;
+            $startB = strtotime((string) ($b['start_date'] ?? '')) ?: 0;
+            if ($startA !== $startB) {
+                return $startB <=> $startA;
+            }
+
+            return ((int) ($b['id'] ?? 0)) <=> ((int) ($a['id'] ?? 0));
+        });
+
+        $today = date('Y-m-d');
+        foreach ($rows as $row) {
+            if ($this->isWithinCurrentWindow($row, $today)) {
+                return $row;
+            }
+        }
+
+        return $rows[0];
     }
 
     /**
@@ -302,5 +355,17 @@ final class InternshipService
         $this->client->restDelete('internships', 'id=eq.' . $internshipId);
         return $rows[0];
     }
+
+    private function isWithinCurrentWindow(array $internship, string $today): bool
+    {
+        $startDate = (string) ($internship['start_date'] ?? '');
+        $endDate = (string) ($internship['end_date'] ?? '');
+
+        $startsOk = $startDate === '' || $startDate <= $today;
+        $endsOk = $endDate === '' || $endDate >= $today;
+
+        return $startsOk && $endsOk;
+    }
 }
+
 

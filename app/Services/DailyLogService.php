@@ -16,15 +16,8 @@ final class DailyLogService
 
     public function getActiveInternshipId(string $userId): ?int
     {
-        $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
-        if (!isset($students[0])) {
-            return null;
-        }
-        $internships = $this->client->restGet(
-            'internships',
-            'student_id=eq.' . $students[0]['id'] . '&status=eq.active&deleted_at=is.null&select=id'
-        );
-        return isset($internships[0]) ? (int) $internships[0]['id'] : null;
+        $internship = (new InternshipService($this->client))->getCurrentInternshipForStudentUser($userId);
+        return isset($internship['id']) ? (int) $internship['id'] : null;
     }
 
     public function getLog(int $internshipId, string $logDate): ?array

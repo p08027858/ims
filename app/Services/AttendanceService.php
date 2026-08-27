@@ -43,21 +43,16 @@ final class AttendanceService
      */
     public function getActiveInternshipContext(string $userId): ?array
     {
-        $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id');
-        if (!isset($students[0])) {
+        $internship = (new InternshipService($this->client))->getCurrentInternshipForStudentUser($userId);
+        if ($internship === null) {
             return null;
         }
-        $internships = $this->client->restGet(
-            'internships',
-            'student_id=eq.' . $students[0]['id'] . '&status=eq.active&deleted_at=is.null&select=id,company_id,batch_id'
-        );
-        if (!isset($internships[0])) {
-            return null;
-        }
-        $internship = $internships[0];
 
         $companies = $this->client->restGet('companies', 'id=eq.' . $internship['company_id'] . '&select=latitude,longitude,gps_radius_m,name');
-        $batches = $this->client->restGet('batches', 'id=eq.' . $internship['batch_id'] . '&select=min_hours_before_checkout');
+        $batchId = (int) ($internship['batch_id'] ?? 0);
+        $batches = $batchId > 0
+            ? $this->client->restGet('batches', 'id=eq.' . $batchId . '&select=min_hours_before_checkout')
+            : [];
 
         return [
             'id' => (int) $internship['id'],
