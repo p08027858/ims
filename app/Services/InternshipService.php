@@ -91,8 +91,16 @@ final class InternshipService
         $teacherId = (int) ($data['teacher_id'] ?? 0);
         $startDate = trim((string) ($data['start_date'] ?? ''));
         $endDate = trim((string) ($data['end_date'] ?? ''));
+        $batchId = isset($app['batch_id']) ? (int) $app['batch_id'] : 0;
+        if ($batchId <= 0) {
+            $currentBatch = (new BatchService($this->client))->getCurrentBatch();
+            $batchId = (int) ($currentBatch['id'] ?? 0);
+        }
         if ($teacherId <= 0 || $startDate === '' || $endDate === '') {
             throw new AuthException('VALIDATION_ERROR', 'กรุณาเลือกครูนิเทศและกรอกวันที่เริ่ม-สิ้นสุดให้ครบ');
+        }
+        if ($batchId <= 0) {
+            throw new AuthException('VALIDATION_ERROR', 'No active internship batch was found for this application.');
         }
 
         try {
@@ -100,7 +108,7 @@ final class InternshipService
                 'student_id' => $app['student_id'],
                 'company_id' => $app['company_id'],
                 'teacher_id' => $teacherId,
-                'batch_id' => $app['batch_id'],
+                'batch_id' => $batchId,
                 'application_id' => $applicationId,
                 'position_title' => $app['position_title'] ?? $app['position'] ?? null,
                 'start_date' => $startDate,
