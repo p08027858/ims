@@ -42,7 +42,8 @@ final class AttendanceController
                     $this->attendance->getTodayAttendance((int) $context['id'])
                 );
             }
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            error_log('IMS attendance page data fallback: user_id=' . $userId . ' message=' . $e->getMessage());
             $context = null;
             $internship = null;
             $company = null;

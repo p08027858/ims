@@ -25,9 +25,16 @@ final class DailyLogController
             if ($internshipId === null) {
                 return ['logs' => [], 'dailyLogs' => [], 'items' => [], 'noActiveInternship' => true];
             }
-            $logs = $this->logs->listForStudent($internshipId);
+            try {
+                $logs = $this->logs->listForStudent($internshipId);
+            } catch (\Throwable $e) {
+                error_log('IMS daily log list fallback: internship_id=' . $internshipId . ' message=' . $e->getMessage());
+                $logs = [];
+            }
+
             return ['logs' => $logs, 'dailyLogs' => $logs, 'items' => $logs, 'noActiveInternship' => false];
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            error_log('IMS daily log current internship lookup failed: message=' . $e->getMessage());
             return ['logs' => [], 'dailyLogs' => [], 'items' => [], 'noActiveInternship' => true];
         }
     }

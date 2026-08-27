@@ -48,11 +48,23 @@ final class AttendanceService
             return null;
         }
 
-        $companies = $this->client->restGet('companies', 'id=eq.' . $internship['company_id'] . '&select=latitude,longitude,gps_radius_m,name');
+        try {
+            $companies = $this->client->restGet('companies', 'id=eq.' . $internship['company_id'] . '&select=latitude,longitude,gps_radius_m,name');
+        } catch (\Throwable $e) {
+            error_log('IMS attendance company lookup fallback: internship_id=' . (int) ($internship['id'] ?? 0) . ' message=' . $e->getMessage());
+            $companies = [];
+        }
         $batchId = (int) ($internship['batch_id'] ?? 0);
-        $batches = $batchId > 0
-            ? $this->client->restGet('batches', 'id=eq.' . $batchId . '&select=min_hours_before_checkout')
-            : [];
+        if ($batchId > 0) {
+            try {
+                $batches = $this->client->restGet('batches', 'id=eq.' . $batchId . '&select=min_hours_before_checkout');
+            } catch (\Throwable $e) {
+                error_log('IMS attendance batch lookup fallback: internship_id=' . (int) ($internship['id'] ?? 0) . ' batch_id=' . $batchId . ' message=' . $e->getMessage());
+                $batches = [];
+            }
+        } else {
+            $batches = [];
+        }
 
         return [
             'id' => (int) $internship['id'],

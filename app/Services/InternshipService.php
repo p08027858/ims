@@ -79,6 +79,7 @@ final class InternshipService
         $students = $this->client->restGet('students', 'user_id=eq.' . $userId . '&select=id&limit=1');
         $studentId = (int) ($students[0]['id'] ?? 0);
         if ($studentId <= 0) {
+            error_log('IMS current internship lookup: no student found for user_id=' . $userId);
             return null;
         }
 
@@ -366,12 +367,32 @@ final class InternshipService
 
     private function findCurrentInternshipsForStudent(int $studentId): array
     {
-        $baseFilter = 'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&select=*';
+        $statusFilter = 'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&select=*';
+        $latestFilter = 'student_id=eq.' . $studentId . '&select=*&order=id.desc';
 
         try {
-            return $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&deleted_at=is.null&select=*');
-        } catch (SupabaseException) {
-            return $this->client->restGet('internships', $baseFilter);
+            $rows = $this->client->restGet('internships', 'student_id=eq.' . $studentId . '&status=in.(active,approved,ongoing)&deleted_at=is.null&select=*');
+            if (!empty($rows)) {
+                return $rows;
+            }
+        } catch (SupabaseException $e) {
+            error_log('IMS current internship lookup fallback[deleted_at]: student_id=' . $studentId . ' message=' . $e->getMessage());
+        }
+
+        try {
+            $rows = $this->client->restGet('internships', $statusFilter);
+            if (!empty($rows)) {
+                return $rows;
+            }
+        } catch (SupabaseException $e) {
+            error_log('IMS current internship lookup fallback[status]: student_id=' . $studentId . ' message=' . $e->getMessage());
+        }
+
+        try {
+            return $this->client->restGet('internships', $latestFilter);
+        } catch (SupabaseException $e) {
+            error_log('IMS current internship lookup failed: student_id=' . $studentId . ' message=' . $e->getMessage());
+            return [];
         }
     }
 }
