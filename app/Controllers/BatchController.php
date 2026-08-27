@@ -7,7 +7,7 @@ use App\Services\AuthException;
 use App\Services\BatchService;
 use App\Support\Session;
 
-/** internship_batches admin console (Phase 8 item 1). */
+/** batches admin console (Phase 8 item 1). */
 final class BatchController
 {
     private BatchService $batches;
@@ -24,7 +24,7 @@ final class BatchController
             'currentBatch' => $current !== null ? [
                 'id' => $current['id'],
                 'name' => $current['name'],
-                'program' => 'ทุกคณะ/สาขา', // internship_batches has no per-program scoping in the schema (DATABASE.md §1.3) — batches are university-wide
+                'program' => 'ทุกคณะ/สาขา', // batches has no per-program scoping in the schema (DATABASE.md §1.3) — batches are university-wide
                 'status' => $current['status'] === 'open' ? 'เปิดรับสมัคร' : ($current['status'] === 'active' ? 'กำลังดำเนินการ' : 'ร่าง'),
                 'start_date' => $current['start_date'],
                 'end_date' => $current['end_date'],
@@ -46,7 +46,7 @@ final class BatchController
         try {
             $this->batches->create($_POST);
             $user = Session::user();
-            (new AuditLogger())->log((string) $user['id'], (string) $user['role'], 'create', 'internship_batches', 'internship_batches', null, null, ['name' => $_POST['name'] ?? '']);
+            (new AuditLogger())->log((string) $user['id'], (string) $user['role'], 'create', 'batches', 'batches', null, null, ['name' => $_POST['name'] ?? '']);
             header('Location: /admin/batches');
         } catch (AuthException $e) {
             Session::flashError($e->getMessage());
@@ -64,7 +64,7 @@ final class BatchController
             }
             $this->batches->close((int) $current['id']);
             $user = Session::user();
-            (new AuditLogger())->log((string) $user['id'], (string) $user['role'], 'update', 'internship_batches', 'internship_batches', (int) $current['id'], ['status' => $current['status']], ['status' => 'closed']);
+            (new AuditLogger())->log((string) $user['id'], (string) $user['role'], 'update', 'batches', 'batches', (int) $current['id'], ['status' => $current['status']], ['status' => 'closed']);
         } catch (AuthException $e) {
             Session::flashError($e->getMessage());
         }
@@ -72,3 +72,4 @@ final class BatchController
         exit;
     }
 }
+

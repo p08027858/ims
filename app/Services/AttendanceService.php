@@ -36,7 +36,7 @@ final class AttendanceService
 
     /**
      * Resolves the logged-in student's currently active internship, plus everything checkin/
-     * checkout need from company (GPS) and internship_batches (min hours) — one lookup instead
+     * checkout need from company (GPS) and batches (min hours) — one lookup instead
      * of scattering restGet calls across the controller.
      *
      * @return array{id:int,company_id:int,latitude:float,longitude:float,gps_radius_m:float,min_hours_before_checkout:float}|null
@@ -57,7 +57,7 @@ final class AttendanceService
         $internship = $internships[0];
 
         $companies = $this->client->restGet('companies', 'id=eq.' . $internship['company_id'] . '&select=latitude,longitude,gps_radius_m,name');
-        $batches = $this->client->restGet('internship_batches', 'id=eq.' . $internship['batch_id'] . '&select=min_hours_before_checkout');
+        $batches = $this->client->restGet('batches', 'id=eq.' . $internship['batch_id'] . '&select=min_hours_before_checkout');
 
         return [
             'id' => (int) $internship['id'],

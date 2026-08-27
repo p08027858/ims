@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-/** internship_batches (AI_AGENT_PHASES.md Phase 8 item 1, second half). */
+/** batches (AI_AGENT_PHASES.md Phase 8 item 1, second half). */
 final class BatchService
 {
     private SupabaseClient $client;
@@ -17,14 +17,14 @@ final class BatchService
     /** The most recent non-closed batch — the admin console shows one "current" batch at a time, matching the existing mock UI. */
     public function getCurrentBatch(): ?array
     {
-        $rows = $this->client->restGet('internship_batches', 'status=neq.closed&order=id.desc&limit=1&select=*');
+        $rows = $this->client->restGet('batches', 'status=neq.closed&order=id.desc&limit=1&select=*');
         return $rows[0] ?? null;
     }
 
     /** @return array<int, array{id:int,name:string,status:string}> */
     public function listPastBatches(): array
     {
-        return $this->client->restGet('internship_batches', 'status=eq.closed&order=id.desc&select=id,name,status');
+        return $this->client->restGet('batches', 'status=eq.closed&order=id.desc&select=id,name,status');
     }
 
     public function create(array $data): void
@@ -59,7 +59,7 @@ final class BatchService
         }
 
         try {
-            $this->client->restInsert('internship_batches', [
+            $this->client->restInsert('batches', [
                 'name' => $name,
                 'academic_year' => $academicYear,
                 'semester' => $semester,
@@ -78,10 +78,10 @@ final class BatchService
 
     public function close(int $batchId): void
     {
-        $rows = $this->client->restGet('internship_batches', 'id=eq.' . $batchId . '&select=id,status');
+        $rows = $this->client->restGet('batches', 'id=eq.' . $batchId . '&select=id,status');
         if (!isset($rows[0]) || $rows[0]['status'] === 'closed') {
             throw new AuthException('VALIDATION_ERROR', 'ไม่พบรอบฝึกงานนี้ หรือปิดไปแล้ว');
         }
-        $this->client->restUpdate('internship_batches', 'id=eq.' . $batchId, ['status' => 'closed']);
+        $this->client->restUpdate('batches', 'id=eq.' . $batchId, ['status' => 'closed']);
     }
 }
