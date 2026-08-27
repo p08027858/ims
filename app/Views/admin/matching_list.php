@@ -5,12 +5,19 @@
  * them). Wired to App\Controllers\InternshipController::matchingListData().
  */
 $unmatched = $unmatched ?? [];
+$hasTeachers = (bool) ($hasTeachers ?? false);
 ?>
 <div class="flex flex-col gap-6">
   <div>
     <h1 class="font-display-metrics text-[32px] text-on-surface dark:text-text-dark-mode mb-2">Teacher Matching</h1>
     <p class="font-body-md text-body-md text-on-surface-variant">Accepted applications are waiting for Admin to assign a supervisor and create the internship.</p>
   </div>
+
+  <?php if (!$hasTeachers): ?>
+    <div class="bg-error-container text-on-error-container rounded-lg p-4 font-body-md text-body-md" role="alert">
+      No teacher records were found in the `teachers` table yet. Create a teacher at `/admin/teachers/new` before starting the matching flow.
+    </div>
+  <?php endif; ?>
 
   <?php if (empty($unmatched)): ?>
     <div class="flex flex-col items-center justify-center py-16 text-center">

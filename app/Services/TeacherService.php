@@ -21,11 +21,26 @@ final class TeacherService
     /** @return array<int, array{id:int,name:string}> */
     public function listTeachers(): array
     {
-        $rows = $this->client->restGet('teachers', 'select=id,first_name,last_name&order=first_name.asc');
-        return array_map(
-            static fn (array $t) => ['id' => (int) $t['id'], 'name' => trim($t['first_name'] . ' ' . $t['last_name'])],
+        $rows = $this->client->restGet('teachers', 'select=id,user_id,first_name,last_name&order=first_name.asc');
+        $teachers = array_map(
+            static function (array $t): array {
+                $name = trim((string) (($t['first_name'] ?? '') . ' ' . ($t['last_name'] ?? '')));
+
+                return [
+                    'id' => (int) ($t['id'] ?? 0),
+                    'name' => $name !== '' ? $name : ('Teacher #' . (int) ($t['id'] ?? 0)),
+                ];
+            },
             $rows
         );
+
+        $teachers = array_values(array_filter($teachers, static fn (array $t): bool => $t['id'] > 0));
+        return $teachers;
+    }
+
+    public function hasTeachers(): bool
+    {
+        return !empty($this->client->restGet('teachers', 'select=id&limit=1'));
     }
 
     /**

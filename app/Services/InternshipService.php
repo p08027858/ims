@@ -18,27 +18,53 @@ final class InternshipService
     /** GET /admin/matching/{id} loader context — the accepted application plus readable student/company names. */
     public function getApplicationMatchContext(int $applicationId): ?array
     {
-        $apps = $this->client->restGet('internship_applications', 'id=eq.' . $applicationId . '&status=eq.accepted&select=*');
+        $apps = $this->client->restGet(
+            'internship_applications',
+            'id=eq.' . $applicationId . '&status=in.(accepted,approved,pending_approval)&select=*'
+        );
         if (!isset($apps[0])) {
             return null;
         }
+
         $app = $apps[0];
-        $stu = $this->client->restGet('students', 'id=eq.' . $app['student_id'] . '&select=first_name,last_name,student_code,department_id');
-        $deptName = '';
-        if (isset($stu[0])) {
-            $dept = $this->client->restGet('departments', 'id=eq.' . $stu[0]['department_id'] . '&select=name_th');
-            $deptName = $dept[0]['name_th'] ?? '';
+        $student = [];
+        $department = [];
+        $company = [];
+
+        if (!empty($app['student_id'])) {
+            $student = $this->client->restGet(
+                'students',
+                'id=eq.' . (int) $app['student_id'] . '&select=first_name,last_name,student_code,department_id&limit=1'
+            )[0] ?? [];
         }
-        $com = $this->client->restGet('companies', 'id=eq.' . $app['company_id'] . '&select=name,address');
+
+        if (!empty($student['department_id'])) {
+            $department = $this->client->restGet(
+                'departments',
+                'id=eq.' . (int) $student['department_id'] . '&select=name_th,name_en&limit=1'
+            )[0] ?? [];
+        }
+
+        if (!empty($app['company_id'])) {
+            $company = $this->client->restGet(
+                'companies',
+                'id=eq.' . (int) $app['company_id'] . '&select=name,address&limit=1'
+            )[0] ?? [];
+        }
+
+        $studentName = trim((string) (($student['first_name'] ?? '') . ' ' . ($student['last_name'] ?? '')));
 
         return [
             'application_id' => $applicationId,
             'student' => [
-                'name' => isset($stu[0]) ? trim($stu[0]['first_name'] . ' ' . $stu[0]['last_name']) : '-',
-                'code' => $stu[0]['student_code'] ?? '-',
-                'department' => $deptName,
+                'name' => $studentName !== '' ? $studentName : '-',
+                'code' => (string) ($student['student_code'] ?? '-'),
+                'department' => (string) ($department['name_th'] ?? $department['name_en'] ?? '-'),
             ],
-            'company' => ['name' => $com[0]['name'] ?? '-', 'address' => $com[0]['address'] ?? '-'],
+            'company' => [
+                'name' => (string) ($company['name'] ?? '-'),
+                'address' => (string) ($company['address'] ?? '-'),
+            ],
         ];
     }
 

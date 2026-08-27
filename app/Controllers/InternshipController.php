@@ -8,6 +8,7 @@ use App\Services\ApplicationService;
 use App\Services\AuditLogger;
 use App\Services\AuthException;
 use App\Services\InternshipService;
+use App\Services\TeacherService;
 use App\Support\Session;
 
 /** internships — admin matching/approve/terminate (Phase 4 items 2-4). */
@@ -25,7 +26,10 @@ final class InternshipController
     /** GET /admin/matching loader — accepted applications not yet turned into an internship. */
     public function matchingListData(array $params): array
     {
-        return ['unmatched' => $this->applications->listAcceptedUnmatched()];
+        return [
+            'unmatched' => $this->applications->listAcceptedUnmatched(),
+            'hasTeachers' => (new TeacherService())->hasTeachers(),
+        ];
     }
 
     /** GET /admin/matching/{id} loader. */
