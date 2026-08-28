@@ -75,6 +75,7 @@ $thaiDate = date('j F Y', strtotime('+543 years'));
 let photoBase64 = null;
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
 ['dragenter', 'dragover'].forEach(n => dropzone.addEventListener(n, e => { e.preventDefault(); dropzone.classList.add('border-indigo-600'); }));
 ['dragleave', 'drop'].forEach(n => dropzone.addEventListener(n, e => { e.preventDefault(); dropzone.classList.remove('border-indigo-600'); }));
@@ -145,7 +146,10 @@ document.getElementById('daily-form').addEventListener('submit', async function(
   try {
     const res = await fetch('/student/daily-logs/new', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
       body: JSON.stringify(payload)
     });
 
