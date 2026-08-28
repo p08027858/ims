@@ -38,7 +38,7 @@ final class AttendanceService
     }
 
     /**
-     * @return array{id:int,company_id:int,company_name:string,latitude:float,longitude:float,gps_radius_m:float,min_hours_before_checkout:float}|null
+     * @return array{id:int,student_id:int,company_id:int,company_name:string,latitude:float,longitude:float,gps_radius_m:float,min_hours_before_checkout:float}|null
      */
     public function getActiveInternshipContext(string $userId): ?array
     {
@@ -86,6 +86,7 @@ final class AttendanceService
 
         return [
             'id' => (int) $internship['id'],
+            'student_id' => (int) ($internship['student_id'] ?? 0),
             'company_id' => (int) $internship['company_id'],
             'company_name' => (string) ($companies[0]['name'] ?? ''),
             'latitude' => (float) ($companies[0]['latitude'] ?? 0),
@@ -114,6 +115,10 @@ final class AttendanceService
     public function checkin(array $context, float $lat, float $lng, float $accuracyM, ?string $photoBase64): array
     {
         $internshipId = (int) $context['id'];
+        $studentId = (int) ($context['student_id'] ?? 0);
+        if ($studentId <= 0) {
+            throw new ApiException(422, 'STUDENT_NOT_FOUND', 'No student_id was resolved for this attendance record.');
+        }
         $existing = $this->getTodayAttendance($internshipId);
 
         if ($existing !== null && !empty($existing['check_in_at'])) {
@@ -133,6 +138,7 @@ final class AttendanceService
         if ($distance > (float) $context['gps_radius_m']) {
             $payload = [
                 'internship_id' => $internshipId,
+                'student_id' => $studentId,
                 'check_in_lat' => $lat,
                 'check_in_lng' => $lng,
                 'status' => 'out_of_range',
@@ -152,6 +158,7 @@ final class AttendanceService
         $status = $this->isPastLateThreshold() ? 'late' : 'present';
         $payload = [
             'internship_id' => $internshipId,
+            'student_id' => $studentId,
             'check_in_at' => date('c'),
             'check_in_lat' => $lat,
             'check_in_lng' => $lng,
