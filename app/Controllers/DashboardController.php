@@ -184,7 +184,7 @@ final class DashboardController
     {
         $rows = $this->client->restGet(
             'attendance',
-            'internship_id=eq.' . $internshipId . '&work_date=eq.' . date('Y-m-d') . '&select=check_in_at,check_out_at&limit=1'
+            'internship_id=eq.' . $internshipId . '&date=eq.' . date('Y-m-d') . '&select=check_in_at,check_out_at&limit=1'
         );
         if (!isset($rows[0])) {
             return null;
@@ -234,11 +234,11 @@ final class DashboardController
     {
         $rows = $this->client->restGet(
             'attendance',
-            'internship_id=eq.' . $internshipId . '&order=work_date.desc&limit=3&select=work_date,check_in_at,check_out_at,day_status'
+            'internship_id=eq.' . $internshipId . '&order=date.desc&limit=3&select=date,check_in_at,check_out_at,day_status'
         );
         $out = [];
         foreach ($rows as $r) {
-            $ts = strtotime((string) ($r['work_date'] ?? ''));
+            $ts = strtotime((string) ($r['date'] ?? ''));
             $dayLabel = $ts !== false ? date('d/m', $ts) : '-';
             if (!empty($r['check_in_at'])) {
                 $out[] = ['title' => 'Check-in', 'detail' => $dayLabel . ', ' . date('H:i', strtotime((string) $r['check_in_at'])) . ' hrs', 'ok' => true];
@@ -307,7 +307,7 @@ final class DashboardController
 
                 $checkIn = '--:--';
                 $status = 'absent';
-                $att = $this->client->restGet('attendance', 'internship_id=eq.' . $internshipId . '&work_date=eq.' . $today . '&select=check_in_at,day_status&limit=1');
+                $att = $this->client->restGet('attendance', 'internship_id=eq.' . $internshipId . '&date=eq.' . $today . '&select=check_in_at,day_status&limit=1');
                 if (isset($att[0]) && !empty($att[0]['check_in_at'])) {
                     $checkIn = date('H:i', strtotime((string) $att[0]['check_in_at']));
                     $rawStatus = (string) ($att[0]['day_status'] ?? '');

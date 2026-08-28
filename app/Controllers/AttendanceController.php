@@ -226,7 +226,7 @@ final class AttendanceController
 
         return [
             'id' => $row['id'] ?? null,
-            'date' => (string) ($row['work_date'] ?? date('Y-m-d')),
+            'date' => (string) ($row['date'] ?? date('Y-m-d')),
             'check_in_time' => $row['check_in_at'] ?? null,
             'check_out_time' => $row['check_out_at'] ?? null,
             'status' => $row['day_status'] ?? ($row['check_in_status'] ?? null),

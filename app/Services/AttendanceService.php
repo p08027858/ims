@@ -83,7 +83,7 @@ final class AttendanceService
     {
         $rows = $this->client->restGet(
             'attendance',
-            'internship_id=eq.' . $internshipId . '&work_date=eq.' . date('Y-m-d') . '&select=*'
+            'internship_id=eq.' . $internshipId . '&date=eq.' . date('Y-m-d') . '&select=*'
         );
         return $rows[0] ?? null;
     }
@@ -124,7 +124,7 @@ final class AttendanceService
 
         $data = [
             'internship_id' => $internshipId,
-            'work_date' => $today,
+            'date' => $today,
             'check_in_lat' => $lat,
             'check_in_lng' => $lng,
             'check_in_accuracy_m' => $accuracyM,
@@ -233,7 +233,7 @@ final class AttendanceService
     /**
      * RULE-ATT-05 / TC-ATT-007 — the logic this rule needs, exposed so Phase 9's actual cron
      * scheduler (DEPLOYMENT.md §7, not built yet) can call it; not wired to a scheduled task in
-     * this phase. Any row still missing a checkout from a PAST work_date gets check_out_status
+     * this phase. Any row still missing a checkout from a past attendance date gets check_out_status
      * = rejected. day_status intentionally untouched (RULES.md RULE-ATT-05, fixed 2026-07-30 —
      * there is no 'incomplete' value in the day_status enum).
      *
@@ -243,7 +243,7 @@ final class AttendanceService
     {
         $rows = $this->client->restGet(
             'attendance',
-            'work_date=lt.' . date('Y-m-d') . '&check_in_at=not.is.null&check_out_at=is.null&select=id'
+            'date=lt.' . date('Y-m-d') . '&check_in_at=not.is.null&check_out_at=is.null&select=id'
         );
         foreach ($rows as $r) {
             $this->client->restUpdate('attendance', 'id=eq.' . $r['id'], ['check_out_status' => 'rejected']);
@@ -256,10 +256,10 @@ final class AttendanceService
     {
         $rows = $this->client->restGet(
             'attendance',
-            'internship_id=eq.' . $internshipId . '&order=work_date.desc&select=work_date,check_in_at,check_out_at,total_hours,day_status'
+            'internship_id=eq.' . $internshipId . '&order=date.desc&select=date,check_in_at,check_out_at,total_hours,day_status'
         );
         return array_map(static fn (array $r) => [
-            'date' => $r['work_date'],
+            'date' => $r['date'],
             'check_in' => $r['check_in_at'] !== null ? date('H:i', strtotime($r['check_in_at'])) : '-',
             'check_out' => $r['check_out_at'] !== null ? date('H:i', strtotime($r['check_out_at'])) : '-',
             'hours' => $r['total_hours'] !== null ? (float) $r['total_hours'] : 0,
