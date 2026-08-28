@@ -153,11 +153,11 @@ final class DashboardController
     private function attendanceStats(int $internshipId, int $required): array
     {
         $stats = ['hours_logged' => 0, 'hours_required' => $required, 'percent_complete' => 0, 'days_present' => 0, 'days_late' => 0, 'days_absent' => 0];
-        $rows = $this->client->restGet('attendance', 'internship_id=eq.' . $internshipId . '&select=check_in_at,check_out_at,total_hours,day_status');
+        $rows = $this->client->restGet('attendance', 'internship_id=eq.' . $internshipId . '&select=created_at,check_in_at,check_out_at,status');
         $hours = 0.0;
         foreach ($rows as $r) {
-            $rowHours = isset($r['total_hours']) && $r['total_hours'] !== null ? (float) $r['total_hours'] : 0.0;
-            if ($rowHours <= 0 && !empty($r['check_in_at']) && !empty($r['check_out_at'])) {
+            $rowHours = 0.0;
+            if (!empty($r['check_in_at']) && !empty($r['check_out_at'])) {
                 $in = strtotime((string) $r['check_in_at']);
                 $out = strtotime((string) $r['check_out_at']);
                 if ($in !== false && $out !== false) {
@@ -168,7 +168,7 @@ final class DashboardController
                 }
             }
             $hours += $rowHours;
-            match ((string) ($r['day_status'] ?? '')) {
+            match ((string) ($r['status'] ?? '')) {
                 'present' => $stats['days_present']++,
                 'late' => $stats['days_late']++,
                 'absent' => $stats['days_absent']++,
@@ -182,9 +182,14 @@ final class DashboardController
 
     private function todayAttendanceRow(int $internshipId): ?array
     {
+        $today = date('Y-m-d');
+        $tomorrow = date('Y-m-d', strtotime($today . ' +1 day'));
         $rows = $this->client->restGet(
             'attendance',
-            'internship_id=eq.' . $internshipId . '&date=eq.' . date('Y-m-d') . '&select=check_in_at,check_out_at&limit=1'
+            'internship_id=eq.' . $internshipId
+            . '&created_at=gte.' . rawurlencode($today . 'T00:00:00')
+            . '&created_at=lt.' . rawurlencode($tomorrow . 'T00:00:00')
+            . '&select=check_in_at,check_out_at&limit=1'
         );
         if (!isset($rows[0])) {
             return null;
@@ -234,18 +239,18 @@ final class DashboardController
     {
         $rows = $this->client->restGet(
             'attendance',
-            'internship_id=eq.' . $internshipId . '&order=date.desc&limit=3&select=date,check_in_at,check_out_at,day_status'
+            'internship_id=eq.' . $internshipId . '&order=created_at.desc&limit=3&select=created_at,check_in_at,check_out_at,status'
         );
         $out = [];
         foreach ($rows as $r) {
-            $ts = strtotime((string) ($r['date'] ?? ''));
+            $ts = strtotime((string) ($r['check_in_at'] ?? $r['created_at'] ?? ''));
             $dayLabel = $ts !== false ? date('d/m', $ts) : '-';
             if (!empty($r['check_in_at'])) {
                 $out[] = ['title' => 'Check-in', 'detail' => $dayLabel . ', ' . date('H:i', strtotime((string) $r['check_in_at'])) . ' hrs', 'ok' => true];
                 if (!empty($r['check_out_at'])) {
                     $out[] = ['title' => 'Check-out', 'detail' => $dayLabel . ', ' . date('H:i', strtotime((string) $r['check_out_at'])) . ' hrs', 'ok' => true];
                 }
-            } elseif ((string) ($r['day_status'] ?? '') === 'absent') {
+            } elseif ((string) ($r['status'] ?? '') === 'absent') {
                 $out[] = ['title' => 'Absent', 'detail' => $dayLabel, 'ok' => false];
             } else {
                 $out[] = ['title' => 'No attendance', 'detail' => $dayLabel, 'ok' => false];
@@ -307,10 +312,16 @@ final class DashboardController
 
                 $checkIn = '--:--';
                 $status = 'absent';
-                $att = $this->client->restGet('attendance', 'internship_id=eq.' . $internshipId . '&date=eq.' . $today . '&select=check_in_at,day_status&limit=1');
+                $att = $this->client->restGet(
+                    'attendance',
+                    'internship_id=eq.' . $internshipId
+                    . '&created_at=gte.' . rawurlencode($today . 'T00:00:00')
+                    . '&created_at=lt.' . rawurlencode(date('Y-m-d', strtotime($today . ' +1 day')) . 'T00:00:00')
+                    . '&select=check_in_at,status&limit=1'
+                );
                 if (isset($att[0]) && !empty($att[0]['check_in_at'])) {
                     $checkIn = date('H:i', strtotime((string) $att[0]['check_in_at']));
-                    $rawStatus = (string) ($att[0]['day_status'] ?? '');
+                    $rawStatus = (string) ($att[0]['status'] ?? '');
                     $status = in_array($rawStatus, ['present', 'late'], true) ? $rawStatus : 'present';
                 }
 

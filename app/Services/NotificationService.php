@@ -151,11 +151,18 @@ final class NotificationService
             return 0;
         }
         $today = date('Y-m-d');
+        $tomorrow = date('Y-m-d', strtotime($today . ' +1 day'));
         $internships = $this->client->restGet('internships', 'status=eq.active&deleted_at=is.null&select=id,student_id');
         $sent = 0;
         foreach ($internships as $i) {
-            $attendance = $this->client->restGet('attendance', 'internship_id=eq.' . $i['id'] . '&work_date=eq.' . $today . '&select=check_in_at,day_status');
-            if (isset($attendance[0]) && ($attendance[0]['check_in_at'] !== null || in_array($attendance[0]['day_status'], ['leave', 'holiday'], true))) {
+            $attendance = $this->client->restGet(
+                'attendance',
+                'internship_id=eq.' . $i['id']
+                . '&created_at=gte.' . rawurlencode($today . 'T00:00:00')
+                . '&created_at=lt.' . rawurlencode($tomorrow . 'T00:00:00')
+                . '&select=check_in_at,status'
+            );
+            if (isset($attendance[0]) && ($attendance[0]['check_in_at'] !== null || in_array($attendance[0]['status'], ['leave', 'holiday'], true))) {
                 continue; // already checked in, or excused today
             }
             $student = $this->client->restGet('students', 'id=eq.' . $i['student_id'] . '&select=user_id');
@@ -180,10 +187,17 @@ final class NotificationService
             return 0;
         }
         $today = date('Y-m-d');
+        $tomorrow = date('Y-m-d', strtotime($today . ' +1 day'));
         $internships = $this->client->restGet('internships', 'status=eq.active&deleted_at=is.null&select=id,student_id');
         $sent = 0;
         foreach ($internships as $i) {
-            $checkedIn = $this->client->restGet('attendance', 'internship_id=eq.' . $i['id'] . '&work_date=eq.' . $today . '&check_in_at=not.is.null&select=id');
+            $checkedIn = $this->client->restGet(
+                'attendance',
+                'internship_id=eq.' . $i['id']
+                . '&created_at=gte.' . rawurlencode($today . 'T00:00:00')
+                . '&created_at=lt.' . rawurlencode($tomorrow . 'T00:00:00')
+                . '&check_in_at=not.is.null&select=id'
+            );
             if (empty($checkedIn)) {
                 continue; // not checked in at all today — RULE-NOTI-01's concern, not this one
             }

@@ -184,11 +184,22 @@ final class LeaveService
         $end = strtotime($leave['end_date']);
         while ($cursor <= $end) {
             $date = date('Y-m-d', $cursor);
-            $existing = $this->client->restGet('attendance', 'internship_id=eq.' . $internshipId . '&work_date=eq.' . $date . '&select=id');
+            $nextDate = date('Y-m-d', strtotime($date . ' +1 day'));
+            $existing = $this->client->restGet(
+                'attendance',
+                'internship_id=eq.' . $internshipId
+                . '&created_at=gte.' . rawurlencode($date . 'T00:00:00')
+                . '&created_at=lt.' . rawurlencode($nextDate . 'T00:00:00')
+                . '&select=id'
+            );
             if (isset($existing[0])) {
-                $this->client->restUpdate('attendance', 'id=eq.' . $existing[0]['id'], ['day_status' => 'leave']);
+                $this->client->restUpdate('attendance', 'id=eq.' . $existing[0]['id'], ['status' => 'leave']);
             } else {
-                $this->client->restInsert('attendance', ['internship_id' => $internshipId, 'work_date' => $date, 'day_status' => 'leave']);
+                $this->client->restInsert('attendance', [
+                    'internship_id' => $internshipId,
+                    'created_at' => $date . 'T00:00:00',
+                    'status' => 'leave',
+                ]);
             }
             $cursor = strtotime('+1 day', $cursor);
         }

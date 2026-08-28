@@ -193,10 +193,18 @@ final class DailyLogService
         $student = $studentId !== null ? $this->client->restGet('students', 'id=eq.' . $studentId . '&select=first_name,last_name') : [];
         $log['student_name'] = isset($student[0]) ? trim($student[0]['first_name'] . ' ' . $student[0]['last_name']) : '-';
 
-        $attendance = $this->client->restGet('attendance', 'internship_id=eq.' . $log['internship_id'] . '&date=eq.' . $log['log_date'] . '&select=check_in_at,check_out_at,check_in_accuracy_m');
+        $logDate = substr((string) ($log['log_date'] ?? ''), 0, 10);
+        $nextDate = date('Y-m-d', strtotime($logDate . ' +1 day'));
+        $attendance = $this->client->restGet(
+            'attendance',
+            'internship_id=eq.' . $log['internship_id']
+            . '&created_at=gte.' . rawurlencode($logDate . 'T00:00:00')
+            . '&created_at=lt.' . rawurlencode($nextDate . 'T00:00:00')
+            . '&select=check_in_at,check_out_at'
+        );
         $log['check_in'] = isset($attendance[0]['check_in_at']) ? date('H:i', strtotime($attendance[0]['check_in_at'])) : '-';
         $log['check_out'] = isset($attendance[0]['check_out_at']) ? date('H:i', strtotime($attendance[0]['check_out_at'])) : '-';
-        $log['gps_accuracy_m'] = $attendance[0]['check_in_accuracy_m'] ?? null;
+        $log['gps_accuracy_m'] = null;
 
         return $log;
     }

@@ -226,13 +226,13 @@ final class AttendanceController
 
         return [
             'id' => $row['id'] ?? null,
-            'date' => (string) ($row['date'] ?? date('Y-m-d')),
+            'date' => (string) substr((string) ($row['check_in_at'] ?? $row['created_at'] ?? date('c')), 0, 10),
             'check_in_time' => $row['check_in_at'] ?? null,
             'check_out_time' => $row['check_out_at'] ?? null,
-            'status' => $row['day_status'] ?? ($row['check_in_status'] ?? null),
-            'check_in_status' => $row['check_in_status'] ?? null,
-            'check_out_status' => $row['check_out_status'] ?? null,
-            'total_hours' => isset($row['total_hours']) ? (float) $row['total_hours'] : null,
+            'status' => $row['status'] ?? null,
+            'check_in_status' => $row['status'] ?? null,
+            'check_out_status' => !empty($row['check_out_at']) ? 'normal' : null,
+            'total_hours' => null,
         ];
     }
 
