@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\ApiException;
 use App\Services\AttendanceService;
+use App\Services\InternshipService;
 use App\Services\SettingsService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
@@ -23,13 +24,18 @@ final class AttendanceController
     {
         $userId = (string) (Session::user()['id'] ?? '');
         $settings = new SettingsService();
+        $currentInternship = null;
         $context = null;
         $internship = null;
         $company = null;
         $todayAttendance = null;
 
         try {
+            $currentInternship = (new InternshipService($this->client))->getCurrentInternshipForStudentUser($userId);
             $context = $this->attendance->getActiveInternshipContext($userId);
+            if ($currentInternship !== null) {
+                $internship = $currentInternship;
+            }
             if ($context !== null) {
                 $internship = $this->getInternshipById((int) $context['id']);
                 $company = [
@@ -45,7 +51,7 @@ final class AttendanceController
         } catch (\Throwable $e) {
             error_log('IMS attendance page data fallback: user_id=' . $userId . ' message=' . $e->getMessage());
             $context = null;
-            $internship = null;
+            $internship = $currentInternship;
             $company = null;
             $todayAttendance = null;
         }
@@ -60,7 +66,7 @@ final class AttendanceController
         $elapsedHours = $this->elapsedHoursFromAttendance($todayAttendance);
 
         return [
-            'noActiveInternship' => $context === null,
+            'noActiveInternship' => $context === null && $internship === null,
             'today' => date('j F Y', strtotime('+543 years')),
             'companyName' => (string) ($company['name'] ?? ''),
             'companyLat' => $company['latitude'] ?? null,

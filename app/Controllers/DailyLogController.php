@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\AuthException;
 use App\Services\DailyLogService;
+use App\Services\InternshipService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
 
@@ -128,7 +129,14 @@ final class DailyLogController
 
     private function activeInternshipId(): ?int
     {
-        return $this->logs->getActiveInternshipId((string) ((Session::user() ?? [])['id'] ?? ''));
+        $userId = (string) ((Session::user() ?? [])['id'] ?? '');
+        $internshipId = $this->logs->getActiveInternshipId($userId);
+        if ($internshipId !== null) {
+            return $internshipId;
+        }
+
+        $internship = (new InternshipService($this->client))->getCurrentInternshipForStudentUser($userId);
+        return isset($internship['id']) ? (int) $internship['id'] : null;
     }
 
     private function requireActiveInternshipId(): int

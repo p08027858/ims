@@ -2,7 +2,8 @@
 /**
  * GPS check-in/out. Wired to App\Controllers\AttendanceController
  */
-$noActiveInternship = $noActiveInternship ?? false;
+$hasInternship = !empty($internship) || !empty($currentInternship);
+$noActiveInternship = ($noActiveInternship ?? false) && !$hasInternship;
 $today = $today ?? date('j F Y', strtotime('+543 years'));
 $companyName = $companyName ?? ($company['name'] ?? 'บริษัท โกลบอลเทค จำกัด');
 $companyLat = $companyLat ?? ($company['latitude'] ?? 18.163351);
