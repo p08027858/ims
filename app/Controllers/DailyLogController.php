@@ -59,8 +59,9 @@ final class DailyLogController
             $this->respondJson(200, ['success' => true]);
         } catch (AuthException $e) {
             $this->respondJson(422, ['success' => false, 'error' => ['code' => $e->errorCode(), 'message' => $e->getMessage()]]);
-        } catch (\Throwable) {
-            $this->respondJson(500, ['success' => false, 'error' => ['code' => 'DAILY_LOG_SAVE_FAILED', 'message' => 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง']]);
+        } catch (\Throwable $e) {
+            error_log('IMS daily log store failed: ' . $e->getMessage());
+            $this->respondJson(500, ['success' => false, 'error' => ['code' => 'DAILY_LOG_SAVE_FAILED', 'message' => $e->getMessage()]]);
         }
     }
 
@@ -69,13 +70,14 @@ final class DailyLogController
         try {
             $logId = (int) ($params['id'] ?? 0);
             if ($logId <= 0) {
-                throw new AuthException('VALIDATION_ERROR', 'ไม่พบบันทึกที่ต้องการแก้ไข');
+                throw new AuthException('VALIDATION_ERROR', 'Log not found.');
             }
             $this->logs->updateById($logId, $this->requireActiveInternshipId(), $this->submissionData(), [], true);
         } catch (AuthException $e) {
             Session::flashError($e->getMessage());
-        } catch (\Throwable) {
-            Session::flashError('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+        } catch (\Throwable $e) {
+            error_log('IMS daily log update failed: ' . $e->getMessage());
+            Session::flashError($e->getMessage());
         }
         header('Location: /student/daily-logs');
         exit;
@@ -120,8 +122,9 @@ final class DailyLogController
             );
         } catch (AuthException $e) {
             Session::flashError($e->getMessage());
-        } catch (\Throwable) {
-            Session::flashError('ไม่สามารถบันทึกผลการตรวจได้ กรุณาลองใหม่อีกครั้ง');
+        } catch (\Throwable $e) {
+            error_log('IMS daily log review failed: ' . $e->getMessage());
+            Session::flashError($e->getMessage());
         }
         header('Location: ' . $redirect);
         exit;
@@ -143,7 +146,7 @@ final class DailyLogController
     {
         $internshipId = $this->activeInternshipId();
         if ($internshipId === null) {
-            throw new AuthException('VALIDATION_ERROR', 'ไม่พบการฝึกงานที่กำลังดำเนินอยู่');
+            throw new AuthException('VALIDATION_ERROR', 'No active internship found.');
         }
         return $internshipId;
     }
@@ -153,10 +156,14 @@ final class DailyLogController
         $raw = file_get_contents('php://input');
         $input = json_decode($raw, true);
         $input = is_array($input) ? $input : $_POST;
+
         return [
-            'work_description' => trim((string) ($input['work_description'] ?? $input['activity_description'] ?? '')),
-            'learning_outcome' => trim((string) ($input['learning_outcome'] ?? $input['learning_outcomes'] ?? '')),
-            'problem_found' => trim((string) ($input['problem_found'] ?? $input['problems_encountered'] ?? '')),
+            'log_date' => trim((string) ($input['log_date'] ?? date('Y-m-d'))),
+            'title' => trim((string) ($input['title'] ?? '')),
+            'activity_description' => trim((string) ($input['activity_description'] ?? $input['work_description'] ?? '')),
+            'problems_encountered' => trim((string) ($input['problems_encountered'] ?? $input['problem_found'] ?? '')),
+            'learning_outcomes' => trim((string) ($input['learning_outcomes'] ?? $input['learning_outcome'] ?? '')),
+            'photo_url' => trim((string) ($input['photo_url'] ?? $input['photo_base64'] ?? '')),
         ];
     }
 
@@ -165,7 +172,7 @@ final class DailyLogController
         $rows = $this->client->restGet('company_supervisors', 'user_id=eq.' . $userId . '&select=company_id&limit=1');
         $companyId = (int) ($rows[0]['company_id'] ?? 0);
         if ($companyId <= 0) {
-            throw new AuthException('FORBIDDEN', 'ไม่พบบริษัทที่คุณมีสิทธิ์ตรวจบันทึก');
+            throw new AuthException('FORBIDDEN', 'Company context not found.');
         }
         return $companyId;
     }
@@ -175,7 +182,7 @@ final class DailyLogController
         $rows = $this->client->restGet('teachers', 'user_id=eq.' . $userId . '&select=id&limit=1');
         $teacherId = (int) ($rows[0]['id'] ?? 0);
         if ($teacherId <= 0) {
-            throw new AuthException('FORBIDDEN', 'ไม่พบข้อมูลอาจารย์นิเทศของบัญชีนี้');
+            throw new AuthException('FORBIDDEN', 'Teacher context not found.');
         }
         return $teacherId;
     }

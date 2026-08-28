@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-/** daily_logs + daily_log_attachments (AI_AGENT_PHASES.md Phase 6 items 1-2). */
+/** daily_logs + daily_log_attachments aligned to the current production schema. */
 final class DailyLogService
 {
     private SupabaseClient $client;
@@ -31,51 +31,43 @@ final class DailyLogService
         return $log;
     }
 
-    /**
-     * RULE-LOG-01 (unique per day — enforced here by checking-then-updating instead of ever
-     * attempting a raw duplicate insert; DB unique constraint still backstops it, verified
-     * directly at the DB level during Phase 6 testing) and RULE-LOG-02 (locked once submitted).
-     *
-     * @param array<int, array{name:string,type:string,tmp_name:string,error:int,size:int}> $files
-     */
     public function saveOrSubmit(int $internshipId, array $data, array $files, bool $submit): void
     {
-        $logDate = date('Y-m-d');
+        $logDate = trim((string) ($data['log_date'] ?? date('Y-m-d')));
         $existing = $this->getLog($internshipId, $logDate);
+        $studentId = $this->studentIdForInternship($internshipId);
 
-        if ($existing !== null && !in_array($existing['status'], ['draft', 'revision_requested'], true)) {
-            throw new AuthException('VALIDATION_ERROR', 'บันทึกนี้ถูกส่งไปแล้ว ไม่สามารถแก้ไขได้ (ต้องรอผู้ตรวจตีกลับก่อน)');
+        if ($existing !== null && !in_array((string) ($existing['status'] ?? ''), ['draft', 'revision_requested'], true)) {
+            throw new AuthException('VALIDATION_ERROR', 'This daily log has already been submitted and can no longer be edited.');
         }
-        if (trim((string) ($data['work_description'] ?? '')) === '') {
-            throw new AuthException('VALIDATION_ERROR', 'กรุณากรอกงานที่ทำวันนี้');
+        if (trim((string) ($data['activity_description'] ?? '')) === '') {
+            throw new AuthException('VALIDATION_ERROR', 'Activity description is required.');
         }
 
         $payload = [
             'internship_id' => $internshipId,
+            'student_id' => $studentId,
             'log_date' => $logDate,
-            'work_description' => trim($data['work_description']),
-            'learning_outcome' => trim((string) ($data['learning_outcome'] ?? '')) ?: null,
-            'problem_found' => trim((string) ($data['problem_found'] ?? '')) ?: null,
+            'title' => trim((string) ($data['title'] ?? '')) ?: null,
+            'activity_description' => trim((string) ($data['activity_description'] ?? '')),
+            'problems_encountered' => trim((string) ($data['problems_encountered'] ?? '')) ?: null,
+            'learning_outcomes' => trim((string) ($data['learning_outcomes'] ?? '')) ?: null,
+            'photo_url' => trim((string) ($data['photo_url'] ?? '')) ?: null,
+            'status' => $submit ? 'submitted' : (($existing['status'] ?? '') === 'revision_requested' ? 'draft' : ((string) ($existing['status'] ?? 'draft') ?: 'draft')),
         ];
-        if ($submit) {
-            $payload['status'] = 'submitted';
-            $payload['submitted_at'] = date('c');
-        } elseif ($existing !== null && $existing['status'] === 'revision_requested') {
-            $payload['status'] = 'draft'; // editing after a revision request reopens it as draft until resubmitted
-        }
 
         try {
             $rows = $existing !== null
                 ? $this->client->restUpdate('daily_logs', 'id=eq.' . $existing['id'], $payload)
                 : $this->client->restInsert('daily_logs', $payload);
         } catch (SupabaseException $e) {
-            throw new AuthException('VALIDATION_ERROR', 'บันทึกไม่สำเร็จ (มีบันทึกของวันนี้อยู่แล้ว)', ['cause' => $e->getMessage()]);
+            throw new AuthException('VALIDATION_ERROR', $e->getMessage(), ['cause' => $e->getMessage()]);
         }
-        $logId = $rows[0]['id'];
+        $logId = (int) ($rows[0]['id'] ?? 0);
 
         foreach ($files as $file) {
             if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-                continue; // empty file input slot
+                continue;
             }
             $uploaded = $this->uploads->validateAndUpload($file, 'daily-logs', 'internship-' . $internshipId);
             $this->client->restInsert('daily_log_attachments', [
@@ -88,21 +80,14 @@ final class DailyLogService
         }
     }
 
-    /**
-     * SITEMAP.md §2 `/student/daily-logs` — full history for the student's current internship,
-     * newest first (Phase 11; `/student/daily-logs/new` never needed more than "today").
-     *
-     * @return array<int, array{id:int,log_date:string,status:string,work_description:string}>
-     */
     public function listForStudent(int $internshipId): array
     {
         return $this->client->restGet(
             'daily_logs',
-            'internship_id=eq.' . $internshipId . '&select=id,log_date,status,work_description&order=log_date.desc'
+            'internship_id=eq.' . $internshipId . '&select=id,log_date,status,title,activity_description,problems_encountered,learning_outcomes,photo_url&order=log_date.desc'
         );
     }
 
-    /** Ownership-checked lookup for the `/student/daily-logs/{id}/edit` page — must belong to this internship. */
     public function getLogById(int $logId, int $internshipId): ?array
     {
         $rows = $this->client->restGet('daily_logs', 'id=eq.' . $logId . '&internship_id=eq.' . $internshipId . '&select=*');
@@ -114,36 +99,29 @@ final class DailyLogService
         return $log;
     }
 
-    /**
-     * RULE-LOG-02: editing a specific past log (as opposed to saveOrSubmit()'s always-today
-     * behavior for the `/student/daily-logs/new` page) — only while still draft/revision_requested.
-     *
-     * @param array<int, array{name:string,type:string,tmp_name:string,error:int,size:int}> $files
-     */
     public function updateById(int $logId, int $internshipId, array $data, array $files, bool $submit): void
     {
         $log = $this->getLogById($logId, $internshipId);
         if ($log === null) {
-            throw new AuthException('VALIDATION_ERROR', 'ไม่พบบันทึกนี้');
+            throw new AuthException('VALIDATION_ERROR', 'Log not found.');
         }
-        if (!in_array($log['status'], ['draft', 'revision_requested'], true)) {
-            throw new AuthException('VALIDATION_ERROR', 'บันทึกนี้ถูกส่งไปแล้ว ไม่สามารถแก้ไขได้');
+        if (!in_array((string) ($log['status'] ?? ''), ['draft', 'revision_requested'], true)) {
+            throw new AuthException('VALIDATION_ERROR', 'This daily log has already been submitted and can no longer be edited.');
         }
-        if (trim((string) ($data['work_description'] ?? '')) === '') {
-            throw new AuthException('VALIDATION_ERROR', 'กรุณากรอกงานที่ทำวันนี้');
+        if (trim((string) ($data['activity_description'] ?? '')) === '') {
+            throw new AuthException('VALIDATION_ERROR', 'Activity description is required.');
         }
 
         $payload = [
-            'work_description' => trim($data['work_description']),
-            'learning_outcome' => trim((string) ($data['learning_outcome'] ?? '')) ?: null,
-            'problem_found' => trim((string) ($data['problem_found'] ?? '')) ?: null,
+            'student_id' => $this->studentIdForInternship($internshipId),
+            'log_date' => trim((string) ($data['log_date'] ?? $log['log_date'] ?? date('Y-m-d'))),
+            'title' => trim((string) ($data['title'] ?? '')) ?: null,
+            'activity_description' => trim((string) ($data['activity_description'] ?? '')),
+            'problems_encountered' => trim((string) ($data['problems_encountered'] ?? '')) ?: null,
+            'learning_outcomes' => trim((string) ($data['learning_outcomes'] ?? '')) ?: null,
+            'photo_url' => trim((string) ($data['photo_url'] ?? '')) ?: null,
+            'status' => $submit ? 'submitted' : (($log['status'] ?? '') === 'revision_requested' ? 'draft' : (string) ($log['status'] ?? 'draft')),
         ];
-        if ($submit) {
-            $payload['status'] = 'submitted';
-            $payload['submitted_at'] = date('c');
-        } elseif ($log['status'] === 'revision_requested') {
-            $payload['status'] = 'draft';
-        }
         $this->client->restUpdate('daily_logs', 'id=eq.' . $logId, $payload);
 
         foreach ($files as $file) {
@@ -180,7 +158,7 @@ final class DailyLogService
         }
         $rows = $this->client->restGet(
             'daily_logs',
-            'internship_id=in.(' . implode(',', $internshipIds) . ')&status=eq.submitted&order=submitted_at.asc&limit=1&select=*'
+            'internship_id=in.(' . implode(',', $internshipIds) . ')&status=eq.submitted&order=created_at.asc&limit=1&select=*'
         );
         if (!isset($rows[0])) {
             return null;
@@ -209,27 +187,22 @@ final class DailyLogService
         return $log;
     }
 
-    /** RULE-LOG-02: only the reviewer whose role matches (company/teacher) may act, and only while still submitted. */
     public function review(int $logId, string $decision, string $comment, string $reviewerUserId, string $reviewerRole): void
     {
         if (!in_array($decision, ['reviewed', 'revision_requested'], true)) {
-            throw new AuthException('VALIDATION_ERROR', 'สถานะไม่ถูกต้อง');
+            throw new AuthException('VALIDATION_ERROR', 'Invalid daily log status.');
         }
         $rows = $this->client->restGet('daily_logs', 'id=eq.' . $logId . '&status=eq.submitted&select=id,internship_id');
         if (!isset($rows[0])) {
-            throw new AuthException('VALIDATION_ERROR', 'ไม่พบบันทึกนี้ หรือถูกตรวจไปแล้ว');
+            throw new AuthException('VALIDATION_ERROR', 'Daily log not found or already reviewed.');
         }
         $this->assertReviewAuthority((int) $rows[0]['internship_id'], $reviewerUserId, $reviewerRole);
         $this->client->restUpdate('daily_logs', 'id=eq.' . $logId, [
             'status' => $decision,
-            'reviewed_by' => $reviewerUserId,
-            'reviewer_role' => $reviewerRole,
-            'reviewed_at' => date('c'),
-            'reviewer_comment' => trim($comment) ?: null,
+            'supervisor_comment' => trim($comment) ?: null,
         ]);
     }
 
-    /** The service-role key bypasses RLS, so reviewer ownership must be checked here. */
     private function assertReviewAuthority(int $internshipId, string $reviewerUserId, string $reviewerRole): void
     {
         if ($internshipId <= 0 || $reviewerUserId === '') {
@@ -257,10 +230,6 @@ final class DailyLogService
         }
     }
 
-    /**
-     * RULE-LOG-04 — prepared for Phase 9's cron (same pattern as
-     * AttendanceService::closeStaleIncompleteDays()), not scheduled yet.
-     */
     public function notifyMissedLogs(): int
     {
         $yesterday = date('Y-m-d', strtotime('-1 day'));
@@ -274,7 +243,7 @@ final class DailyLogService
                 'internship_id=eq.' . $i['id'] . '&log_date=in.(' . $yesterday . ',' . $twoDaysAgo . ')&select=log_date'
             );
             if (!empty($logs)) {
-                continue; // logged at least one of the last 2 days
+                continue;
             }
             $student = $this->client->restGet('students', 'id=eq.' . $i['student_id'] . '&select=user_id');
             $teacher = $this->client->restGet('teachers', 'id=eq.' . $i['teacher_id'] . '&select=user_id');
@@ -285,12 +254,22 @@ final class DailyLogService
                 $this->client->restInsert('notifications', [
                     'user_id' => $userId,
                     'type' => 'daily_log_missed',
-                    'title' => 'ยังไม่ได้บันทึกงานประจำวัน',
-                    'message' => 'ไม่มีการบันทึกงานประจำวันติดต่อกัน 2 วัน กรุณาตรวจสอบ',
+                    'title' => 'Missing daily log',
+                    'message' => 'No daily log has been recorded for 2 consecutive days. Please review this internship.',
                 ]);
                 $notified++;
             }
         }
         return $notified;
+    }
+
+    private function studentIdForInternship(int $internshipId): int
+    {
+        $rows = $this->client->restGet('internships', 'id=eq.' . $internshipId . '&select=student_id&limit=1');
+        $studentId = (int) ($rows[0]['student_id'] ?? 0);
+        if ($studentId <= 0) {
+            throw new AuthException('VALIDATION_ERROR', 'No student_id found for this internship.');
+        }
+        return $studentId;
     }
 }
