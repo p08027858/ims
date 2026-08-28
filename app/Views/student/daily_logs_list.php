@@ -3,6 +3,12 @@
  * Daily Logs List View
  */
 $logs = $dailyLogs ?? $logs ?? $items ?? [];
+$statusLabels = [
+    'draft' => ['label' => 'ฉบับร่าง', 'class' => 'bg-amber-50 text-amber-600'],
+    'submitted' => ['label' => 'ส่งแล้ว', 'class' => 'bg-emerald-50 text-emerald-600'],
+    'reviewed' => ['label' => 'ตรวจแล้ว', 'class' => 'bg-sky-50 text-sky-600'],
+    'revision_requested' => ['label' => 'ขอแก้ไข', 'class' => 'bg-rose-50 text-rose-600'],
+];
 ?>
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -28,23 +34,24 @@ $logs = $dailyLogs ?? $logs ?? $items ?? [];
   <?php else: ?>
     <div class="space-y-4">
       <?php foreach ($logs as $log): ?>
+        <?php $status = $statusLabels[$log['status'] ?? 'submitted'] ?? ['label' => (string) ($log['status'] ?? '-'), 'class' => 'bg-slate-100 text-slate-600']; ?>
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col sm:flex-row gap-6 items-start">
           <?php if (!empty($log['photo_url'])): ?>
-            <img src="<?= htmlspecialchars($log['photo_url']) ?>" alt="รูปภาพการทำงาน" class="w-full sm:w-36 h-28 object-cover rounded-xl border border-slate-100 shrink-0">
+            <img src="<?= htmlspecialchars($log['photo_url']) ?>" alt="รูปภาพการปฏิบัติงาน" class="w-full sm:w-36 h-28 object-cover rounded-xl border border-slate-100 shrink-0">
           <?php endif; ?>
-          
+
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2 mb-2">
               <span class="inline-flex items-center text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
                 <span class="material-symbols-outlined text-[14px] mr-1">event</span>
                 <?= htmlspecialchars(date('d/m/Y', strtotime($log['log_date'] ?? 'now'))) ?>
               </span>
-              <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600">ส่งแล้ว</span>
+              <span class="text-xs font-medium px-2.5 py-0.5 rounded-full <?= htmlspecialchars($status['class']) ?>"><?= htmlspecialchars($status['label']) ?></span>
             </div>
-            
+
             <h3 class="text-base font-bold text-slate-800 mb-1 truncate"><?= htmlspecialchars($log['title'] ?? 'บันทึกงาน') ?></h3>
             <p class="text-sm text-slate-600 leading-relaxed mb-3"><?= nl2br(htmlspecialchars($log['activity_description'] ?? $log['tasks_performed'] ?? '')) ?></p>
-            
+
             <?php if (!empty($log['problems_encountered']) || !empty($log['learning_outcomes'])): ?>
               <div class="pt-3 border-t border-slate-100 flex flex-wrap gap-4 text-xs text-slate-500">
                 <?php if (!empty($log['problems_encountered'])): ?>
