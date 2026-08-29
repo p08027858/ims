@@ -7,7 +7,13 @@
  */
 $student = $student ?? null;
 $log = $log ?? null;
+$flashResult = $flashResult ?? null;
 ?>
+<?php if ($flashResult !== null): ?>
+  <div class="max-w-[1400px] mx-auto mb-6 rounded-xl p-4 font-body-md text-body-md <?= ($flashResult['type'] ?? '') === 'success' ? 'bg-status-success/10 text-status-success' : 'bg-error-container text-on-error-container' ?>" role="status">
+    <?= htmlspecialchars((string) ($flashResult['message'] ?? '')) ?>
+  </div>
+<?php endif; ?>
 <?php if ($student === null || $log === null): ?>
   <div class="flex flex-col items-center justify-center py-16 text-center max-w-lg mx-auto">
     <span class="material-symbols-outlined text-5xl text-status-success mb-3">task_alt</span>

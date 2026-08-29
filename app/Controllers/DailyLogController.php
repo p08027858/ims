@@ -89,6 +89,7 @@ final class DailyLogController
             $user = Session::user() ?? [];
             $role = (string) ($user['role'] ?? '');
             $userId = (string) ($user['id'] ?? '');
+            $flashResult = Session::pullFlashData('daily_log_review_result');
             $log = match ($role) {
                 'company' => $this->logs->findOldestPendingForCompany($this->companyIdForUser($userId)),
                 'teacher' => $this->logs->findOldestPendingForTeacher($this->teacherIdForUser($userId)),
@@ -104,9 +105,13 @@ final class DailyLogController
                     'path' => (string) ($file['file_path'] ?? ''),
                 ], $log['attachments'] ?? []);
             }
-            return ['log' => $log, 'student' => $log === null ? null : ['name' => (string) ($log['student_name'] ?? '-')]];
+            return [
+                'log' => $log,
+                'student' => $log === null ? null : ['name' => (string) ($log['student_name'] ?? '-')],
+                'flashResult' => $flashResult,
+            ];
         } catch (\Throwable) {
-            return ['log' => null, 'student' => null];
+            return ['log' => null, 'student' => null, 'flashResult' => null];
         }
     }
 
@@ -123,11 +128,26 @@ final class DailyLogController
                 (string) ($user['id'] ?? ''),
                 $role
             );
+            $decision = (string) ($_POST['status'] ?? '');
+            Session::flashData('daily_log_review_result', [
+                'type' => 'success',
+                'message' => $decision === 'reviewed'
+                    ? 'ตรวจบันทึกงานเรียบร้อยแล้ว'
+                    : 'ส่งบันทึกงานกลับเพื่อให้แก้ไขเรียบร้อยแล้ว',
+            ]);
         } catch (AuthException $e) {
             Session::flashError($e->getMessage());
+            Session::flashData('daily_log_review_result', [
+                'type' => 'error',
+                'message' => $e->getMessage(),
+            ]);
         } catch (\Throwable $e) {
             error_log('IMS daily log review failed: ' . $e->getMessage());
             Session::flashError($e->getMessage());
+            Session::flashData('daily_log_review_result', [
+                'type' => 'error',
+                'message' => 'ตรวจบันทึกงานไม่สำเร็จ: ' . $e->getMessage(),
+            ]);
         }
         header('Location: ' . $redirect);
         exit;
