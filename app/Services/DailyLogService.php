@@ -147,42 +147,98 @@ final class DailyLogService
 
     public function findOldestPendingForTeacher(int $teacherId): ?array
     {
-        $internships = $this->client->restGet('internships', 'teacher_id=eq.' . $teacherId . '&select=id');
+        if ($teacherId <= 0) {
+            return null;
+        }
+
+        try {
+            $internships = $this->client->restGet(
+                'internships',
+                'teacher_id=eq.' . $teacherId . '&status=in.(approved,active,ongoing,in_progress,completed,pending_approval)&deleted_at=is.null&select=id'
+            );
+        } catch (SupabaseException $e) {
+            error_log('IMS teacher daily log fallback[deleted_at]: teacher_id=' . $teacherId . ' message=' . $e->getMessage());
+            $internships = $this->client->restGet(
+                'internships',
+                'teacher_id=eq.' . $teacherId . '&status=in.(approved,active,ongoing,in_progress,completed,pending_approval)&select=id'
+            );
+        }
+
         return $this->findOldestPendingAmong(array_column($internships, 'id'));
     }
 
     private function findOldestPendingAmong(array $internshipIds): ?array
     {
+        $internshipIds = array_values(array_filter(array_map('intval', $internshipIds), static fn (int $id): bool => $id > 0));
         if (empty($internshipIds)) {
             return null;
         }
-        $rows = $this->client->restGet(
-            'daily_logs',
-            'internship_id=in.(' . implode(',', $internshipIds) . ')&status=eq.submitted&order=created_at.asc&limit=1&select=*'
-        );
-        if (!isset($rows[0])) {
+
+        $statusGroups = [
+            ['submitted', 'pending'],
+            ['revision_requested', 'draft', 'reviewed'],
+        ];
+
+        $log = null;
+        foreach ($statusGroups as $statuses) {
+            $rows = $this->client->restGet(
+                'daily_logs',
+                'internship_id=in.(' . implode(',', $internshipIds) . ')&status=in.(' . implode(',', $statuses) . ')&order=created_at.asc&limit=1&select=*'
+            );
+            if (isset($rows[0])) {
+                $log = $rows[0];
+                break;
+            }
+        }
+
+        if ($log === null) {
             return null;
         }
-        $log = $rows[0];
-        $log['attachments'] = $this->client->restGet('daily_log_attachments', 'daily_log_id=eq.' . $log['id'] . '&select=file_name,file_path');
 
-        $internship = $this->client->restGet('internships', 'id=eq.' . $log['internship_id'] . '&select=student_id');
-        $studentId = $internship[0]['student_id'] ?? null;
-        $student = $studentId !== null ? $this->client->restGet('students', 'id=eq.' . $studentId . '&select=first_name,last_name') : [];
-        $log['student_name'] = isset($student[0]) ? trim($student[0]['first_name'] . ' ' . $student[0]['last_name']) : '-';
+        try {
+            $log['attachments'] = $this->client->restGet('daily_log_attachments', 'daily_log_id=eq.' . $log['id'] . '&select=file_name,file_path');
+        } catch (\Throwable $e) {
+            error_log('IMS daily log attachments fallback: daily_log_id=' . ($log['id'] ?? 0) . ' message=' . $e->getMessage());
+            $log['attachments'] = [];
+        }
+
+        $studentId = isset($log['student_id']) ? (int) $log['student_id'] : 0;
+        if ($studentId <= 0) {
+            $internship = $this->client->restGet('internships', 'id=eq.' . $log['internship_id'] . '&select=student_id&limit=1');
+            $studentId = (int) ($internship[0]['student_id'] ?? 0);
+        }
+
+        $student = $studentId > 0
+            ? $this->client->restGet('students', 'id=eq.' . $studentId . '&select=first_name,last_name,student_code&limit=1')
+            : [];
+        $log['student_name'] = isset($student[0])
+            ? trim((string) (($student[0]['first_name'] ?? '') . ' ' . ($student[0]['last_name'] ?? '')))
+            : '-';
+        $log['student_code'] = (string) ($student[0]['student_code'] ?? '-');
 
         $logDate = substr((string) ($log['log_date'] ?? ''), 0, 10);
-        $nextDate = date('Y-m-d', strtotime($logDate . ' +1 day'));
-        $attendance = $this->client->restGet(
-            'attendance',
-            'internship_id=eq.' . $log['internship_id']
-            . '&created_at=gte.' . rawurlencode($logDate . 'T00:00:00')
-            . '&created_at=lt.' . rawurlencode($nextDate . 'T00:00:00')
-            . '&select=check_in_at,check_out_at'
-        );
-        $log['check_in'] = isset($attendance[0]['check_in_at']) ? date('H:i', strtotime($attendance[0]['check_in_at'])) : '-';
-        $log['check_out'] = isset($attendance[0]['check_out_at']) ? date('H:i', strtotime($attendance[0]['check_out_at'])) : '-';
+        $log['check_in'] = '-';
+        $log['check_out'] = '-';
         $log['gps_accuracy_m'] = null;
+
+        if ($logDate !== '') {
+            $nextDate = date('Y-m-d', strtotime($logDate . ' +1 day'));
+            try {
+                $attendance = $this->client->restGet(
+                    'attendance',
+                    'internship_id=eq.' . $log['internship_id']
+                    . '&created_at=gte.' . rawurlencode($logDate . 'T00:00:00')
+                    . '&created_at=lt.' . rawurlencode($nextDate . 'T00:00:00')
+                    . '&select=check_in_at,check_out_at'
+                );
+            } catch (\Throwable $e) {
+                error_log('IMS daily log attendance lookup fallback: internship_id=' . ($log['internship_id'] ?? 0) . ' message=' . $e->getMessage());
+                $attendance = [];
+            }
+
+            $log['check_in'] = isset($attendance[0]['check_in_at']) ? date('H:i', strtotime((string) $attendance[0]['check_in_at'])) : '-';
+            $log['check_out'] = isset($attendance[0]['check_out_at']) ? date('H:i', strtotime((string) $attendance[0]['check_out_at'])) : '-';
+        }
 
         return $log;
     }
