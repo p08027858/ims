@@ -3,8 +3,8 @@
 namespace App\Services;
 
 /**
- * internships (AI_AGENT_PHASES.md Phase 4 items 2-4) — the confirmed internship "contract"
- * created from an accepted application, then approved/terminated. State machine: WORKFLOW.md §1.
+ * internships (AI_AGENT_PHASES.md Phase 4 items 2-4) â€” the confirmed internship "contract"
+ * created from an accepted application, then approved/terminated. State machine: WORKFLOW.md Â§1.
  */
 final class InternshipService
 {
@@ -16,7 +16,7 @@ final class InternshipService
         $this->client = $client ?? new SupabaseClient();
     }
 
-    /** GET /admin/matching/{id} loader context — the accepted application plus readable student/company names. */
+    /** GET /admin/matching/{id} loader context â€” the accepted application plus readable student/company names. */
     public function getApplicationMatchContext(int $applicationId): ?array
     {
         $apps = $this->client->restGet(
@@ -126,7 +126,7 @@ final class InternshipService
 
     /**
      * RULE-MATCH-02: unique(student_id, batch_id) is also enforced at the DB level
-     * (DATABASE.md §4.2) — TC-MATCH-004 relies on that constraint surfacing as a conflict here.
+     * (DATABASE.md Â§4.2) â€” TC-MATCH-004 relies on that constraint surfacing as a conflict here.
      */
     public function createFromApplication(int $applicationId, array $data): void
     {
@@ -148,7 +148,7 @@ final class InternshipService
             $batchId = (int) ($currentBatch['id'] ?? 0);
         }
         if ($teacherId <= 0 || $startDate === '' || $endDate === '') {
-            throw new AuthException('VALIDATION_ERROR', 'กรุณาเลือกครูนิเทศและกรอกวันที่เริ่ม-สิ้นสุดให้ครบ');
+            throw new AuthException('VALIDATION_ERROR', 'à¸à¸£à¸¸à¸“à¸²à¹€à¸¥à¸·à¸­à¸à¸„à¸£à¸¹à¸™à¸´à¹€à¸—à¸¨à¹à¸¥à¸°à¸à¸£à¸­à¸à¸§à¸±à¸™à¸—à¸µà¹ˆà¹€à¸£à¸´à¹ˆà¸¡-à¸ªà¸´à¹‰à¸™à¸ªà¸¸à¸”à¹ƒà¸«à¹‰à¸„à¸£à¸š');
         }
         if ($batchId <= 0) {
             throw new AuthException('VALIDATION_ERROR', 'No active internship batch was found for this application.');
@@ -170,13 +170,13 @@ final class InternshipService
             // TC-MATCH-004: Postgres unique_violation (23505) surfaces as a 409 from PostgREST.
             throw new AuthException(
                 'VALIDATION_ERROR',
-                'นักศึกษาคนนี้มีการฝึกงานที่ยืนยันแล้วในรอบนี้อยู่แล้ว (สร้างซ้ำไม่ได้)',
+                'à¸™à¸±à¸à¸¨à¸¶à¸à¸©à¸²à¸„à¸™à¸™à¸µà¹‰à¸¡à¸µà¸à¸²à¸£à¸à¸¶à¸à¸‡à¸²à¸™à¸—à¸µà¹ˆà¸¢à¸·à¸™à¸¢à¸±à¸™à¹à¸¥à¹‰à¸§à¹ƒà¸™à¸£à¸­à¸šà¸™à¸µà¹‰à¸­à¸¢à¸¹à¹ˆà¹à¸¥à¹‰à¸§ (à¸ªà¸£à¹‰à¸²à¸‡à¸‹à¹‰à¸³à¹„à¸¡à¹ˆà¹„à¸”à¹‰)',
                 ['cause' => $e->getMessage()]
             );
         }
     }
 
-    /** Unified admin console list: pending_approval (→ approve) and approved/active (→ terminate). */
+    /** Unified admin console list: pending_approval (â†’ approve) and approved/active (â†’ terminate). */
     public function listForAdminConsole(): array
     {
         $rows = $this->client->restGet(
@@ -204,7 +204,7 @@ final class InternshipService
     {
         $rows = $this->client->restGet('internships', 'id=eq.' . $internshipId . '&select=id,student_id,batch_id,status');
         if (!isset($rows[0]) || $rows[0]['status'] !== 'pending_approval') {
-            throw new AuthException('VALIDATION_ERROR', 'ไม่พบรายการนี้ หรือถูกดำเนินการไปแล้ว');
+            throw new AuthException('VALIDATION_ERROR', 'à¹„à¸¡à¹ˆà¸žà¸šà¸£à¸²à¸¢à¸à¸²à¸£à¸™à¸µà¹‰ à¸«à¸£à¸·à¸­à¸–à¸¹à¸à¸”à¸³à¹€à¸™à¸´à¸™à¸à¸²à¸£à¹„à¸›à¹à¸¥à¹‰à¸§');
         }
         $studentId = $rows[0]['student_id'];
         $batchId = $rows[0]['batch_id'];
@@ -227,7 +227,7 @@ final class InternshipService
     public function terminate(int $internshipId, string $reason): void
     {
         if (trim($reason) === '') {
-            throw new AuthException('VALIDATION_ERROR', 'กรุณาระบุเหตุผลการยุติการฝึกงาน');
+            throw new AuthException('VALIDATION_ERROR', 'à¸à¸£à¸¸à¸“à¸²à¸£à¸°à¸šà¸¸à¹€à¸«à¸•à¸¸à¸œà¸¥à¸à¸²à¸£à¸¢à¸¸à¸•à¸´à¸à¸²à¸£à¸à¸¶à¸à¸‡à¸²à¸™');
         }
         $this->client->restUpdate('internships', 'id=eq.' . $internshipId, [
             'status' => 'terminated',
@@ -237,10 +237,10 @@ final class InternshipService
     }
 
     /**
-     * cron/activate_internships.php (DEPLOYMENT.md §7, WORKFLOW.md §1 state machine) —
-     * approved → active once start_date is reached. Not wired to a real scheduler yet
+     * cron/activate_internships.php (DEPLOYMENT.md Â§7, WORKFLOW.md Â§1 state machine) â€”
+     * approved â†’ active once start_date is reached. Not wired to a real scheduler yet
      * (Phase 9 prepares the logic; Phase 9 also owns actually running it, unlike earlier phases
-     * where the cron itself was deferred to Phase 9 — this one just never had a script before).
+     * where the cron itself was deferred to Phase 9 â€” this one just never had a script before).
      *
      * @return int number of internships activated
      */
@@ -255,8 +255,8 @@ final class InternshipService
     }
 
     /**
-     * cron/complete_internships.php — RULE-GRADE-01: active → completed once (1) accumulated
-     * hours ≥ total_required_hours, (2) both company_final and teacher_final are submitted
+     * cron/complete_internships.php â€” RULE-GRADE-01: active â†’ completed once (1) accumulated
+     * hours â‰¥ total_required_hours, (2) both company_final and teacher_final are submitted
      * (checked via `grade` being set, since EvaluationService::maybeComputeCombinedGrade() only
      * ever sets it once both exist), (3) no pending leave_requests remain.
      *
@@ -287,7 +287,7 @@ final class InternshipService
     }
 
     /**
-     * SITEMAP.md §3/§4 `/company/students` and `/teacher/students` (Phase 11) — same shape for
+     * SITEMAP.md Â§3/Â§4 `/company/students` and `/teacher/students` (Phase 11) â€” same shape for
      * both, filtered by whichever scope column applies (`company_id` or `teacher_id`); the
      * dashboards for both roles reuse this too (never wired to real data since Phase 0's mock).
      *
@@ -296,21 +296,54 @@ final class InternshipService
      */
     public function listAdviseesWithProgress(string $scopeColumn, int $scopeId): array
     {
-        $rows = $this->client->restGet(
-            'internships',
-            $scopeColumn . '=eq.' . $scopeId . '&status=in.(active,completed)&deleted_at=is.null&select=id,student_id,company_id,total_required_hours&order=created_at.desc'
-        );
+        if ($scopeId <= 0) {
+            return [];
+        }
+
+        $query = $scopeColumn . '=eq.' . $scopeId
+            . '&status=in.(approved,active,ongoing,completed,pending_approval)'
+            . '&deleted_at=is.null'
+            . '&select=id,student_id,company_id,total_required_hours,status'
+            . '&order=created_at.desc';
+
+        try {
+            $rows = $this->client->restGet('internships', $query);
+        } catch (SupabaseException $e) {
+            error_log('IMS advisee lookup fallback[deleted_at]: scope=' . $scopeColumn . ' id=' . $scopeId . ' message=' . $e->getMessage());
+            $rows = $this->client->restGet(
+                'internships',
+                $scopeColumn . '=eq.' . $scopeId
+                . '&status=in.(approved,active,ongoing,completed,pending_approval)'
+                . '&select=id,student_id,company_id,total_required_hours,status'
+                . '&order=created_at.desc'
+            );
+        }
+
         $yesterday = date('Y-m-d', strtotime('-1 day'));
         $twoDaysAgo = date('Y-m-d', strtotime('-2 days'));
-        $teacherFinalTemplate = $this->client->restGet('evaluation_templates', "evaluator_type=eq.teacher_final&select=id");
+        $teacherFinalTemplate = $this->client->restGet('evaluation_templates', 'evaluator_type=eq.teacher_final&select=id');
         $teacherFinalTemplateId = $teacherFinalTemplate[0]['id'] ?? null;
 
         $out = [];
         foreach ($rows as $r) {
-            $stu = $this->client->restGet('students', 'id=eq.' . $r['student_id'] . '&select=first_name,last_name,department_id');
+            $stu = $this->client->restGet('students', 'id=eq.' . $r['student_id'] . '&select=first_name,last_name,student_code,department_id');
             $com = $this->client->restGet('companies', 'id=eq.' . $r['company_id'] . '&select=name');
-            $attendance = $this->client->restGet('attendance', 'internship_id=eq.' . $r['id'] . '&total_hours=not.is.null&select=total_hours');
-            $hours = array_sum(array_column($attendance, 'total_hours'));
+            $attendance = $this->client->restGet('attendance', 'internship_id=eq.' . $r['id'] . '&select=check_in_at,check_out_at');
+
+            $hours = 0.0;
+            foreach ($attendance as $entry) {
+                $checkIn = $entry['check_in_at'] ?? null;
+                $checkOut = $entry['check_out_at'] ?? null;
+                if ($checkIn === null || $checkOut === null) {
+                    continue;
+                }
+
+                $seconds = strtotime((string) $checkOut) - strtotime((string) $checkIn);
+                if ($seconds > 0) {
+                    $hours += $seconds / 3600;
+                }
+            }
+
             $logs = $this->client->restGet('daily_logs', 'internship_id=eq.' . $r['id'] . '&log_date=in.(' . $yesterday . ',' . $twoDaysAgo . ')&select=id');
 
             $pendingTeacherFinal = false;
@@ -320,25 +353,26 @@ final class InternshipService
             }
 
             $out[] = [
-                'internship_id' => $r['id'],
-                'name' => isset($stu[0]) ? trim($stu[0]['first_name'] . ' ' . $stu[0]['last_name']) : '-',
-                'company' => $com[0]['name'] ?? '-',
-                'department_id' => $stu[0]['department_id'] ?? null,
+                'internship_id' => (int) ($r['id'] ?? 0),
+                'name' => isset($stu[0]) ? trim((string) (($stu[0]['first_name'] ?? '') . ' ' . ($stu[0]['last_name'] ?? ''))) : '-',
+                'company' => (string) ($com[0]['name'] ?? '-'),
+                'student_code' => (string) ($stu[0]['student_code'] ?? '-'),
+                'department_id' => isset($stu[0]['department_id']) ? (int) $stu[0]['department_id'] : null,
                 'hours' => round((float) $hours, 1),
-                'hours_required' => (int) $r['total_required_hours'],
-                'flag' => empty($logs) ? 'ไม่บันทึกงาน 2 วันขึ้นไป' : null,
+                'hours_required' => (int) ($r['total_required_hours'] ?? 0),
+                'flag' => empty($logs) ? 'ยังไม่บันทึกงานในช่วง 2 วันที่ผ่านมา' : null,
                 'pending_teacher_final' => $pendingTeacherFinal,
             ];
         }
+
         return $out;
     }
-
     /**
-     * Real hard delete (RULE-SEC-01, Phase 10) — distinct from terminate() above, which only ever
+     * Real hard delete (RULE-SEC-01, Phase 10) â€” distinct from terminate() above, which only ever
      * sets status='terminated' and keeps the row (and every child record) around. This is the
      * first genuine `DELETE` the project ever performs; every child table's `internship_id` FK is
-     * declared `on delete cascade` (DATABASE.md §5-8), so Postgres removes attendance/daily_logs/
-     * leave_requests/evaluations (and their own children) automatically — the caller is
+     * declared `on delete cascade` (DATABASE.md Â§5-8), so Postgres removes attendance/daily_logs/
+     * leave_requests/evaluations (and their own children) automatically â€” the caller is
      * responsible for gating this behind Super Admin + PIN (App\Middleware\ActionTokenGuard) and
      * writing the audit_logs old_value snapshot *before* calling this, since nothing survives after.
      *
@@ -348,7 +382,7 @@ final class InternshipService
     {
         $rows = $this->client->restGet('internships', 'id=eq.' . $internshipId . '&select=*');
         if (!isset($rows[0])) {
-            throw new AuthException('VALIDATION_ERROR', 'ไม่พบการฝึกงานนี้');
+            throw new AuthException('VALIDATION_ERROR', 'à¹„à¸¡à¹ˆà¸žà¸šà¸à¸²à¸£à¸à¸¶à¸à¸‡à¸²à¸™à¸™à¸µà¹‰');
         }
         $this->client->restDelete('internships', 'id=eq.' . $internshipId);
         return $rows[0];

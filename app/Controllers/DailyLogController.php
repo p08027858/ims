@@ -96,6 +96,9 @@ final class DailyLogController
             };
             if ($log !== null) {
                 $log['date'] = (string) ($log['log_date'] ?? '');
+                $log['submitted_at'] = (string) ($log['created_at'] ?? $log['log_date'] ?? '');
+                $log['work_description'] = (string) ($log['activity_description'] ?? '');
+                $log['learning_outcome'] = (string) ($log['learning_outcomes'] ?? '');
                 $log['attachments'] = array_map(static fn (array $file): array => [
                     'name' => (string) ($file['file_name'] ?? ''),
                     'path' => (string) ($file['file_path'] ?? ''),

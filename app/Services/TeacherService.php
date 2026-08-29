@@ -43,6 +43,32 @@ final class TeacherService
         return !empty($this->client->restGet('teachers', 'select=id&limit=1'));
     }
 
+    public function resolveTeacherIdByUserId(string $userId): int
+    {
+        $userId = trim($userId);
+        if ($userId === '') {
+            return 0;
+        }
+
+        $rows = $this->client->restGet('teachers', 'user_id=eq.' . $userId . '&select=id&limit=1');
+        return (int) ($rows[0]['id'] ?? 0);
+    }
+
+    public function getTeacherDisplayNameByUserId(string $userId): string
+    {
+        $userId = trim($userId);
+        if ($userId === '') {
+            return '';
+        }
+
+        $rows = $this->client->restGet('teachers', 'user_id=eq.' . $userId . '&select=first_name,last_name&limit=1');
+        if (!isset($rows[0])) {
+            return '';
+        }
+
+        return trim((string) (($rows[0]['first_name'] ?? '') . ' ' . ($rows[0]['last_name'] ?? '')));
+    }
+
     /**
      * @param array{first_name:string,last_name:string,faculty_id:string|int,department_id:string|int,
      *              email:string,password:string,phone?:string,position?:string} $data
