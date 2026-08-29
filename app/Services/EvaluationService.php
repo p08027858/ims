@@ -142,11 +142,11 @@ final class EvaluationService
         foreach ($internships as $i) {
             $student = $this->client->restGet('students', 'id=eq.' . $i['student_id'] . '&select=first_name,last_name,student_code&limit=1');
             $company = !empty($i['company_id'])
-                ? $this->client->restGet('companies', 'id=eq.' . $i['company_id'] . '&select=name,company_name&limit=1')
+                ? $this->client->restGet('companies', 'id=eq.' . $i['company_id'] . '&select=name&limit=1')
                 : [];
 
             $studentName = isset($student[0]) ? trim((string) (($student[0]['first_name'] ?? '') . ' ' . ($student[0]['last_name'] ?? ''))) : '-';
-            $companyName = (string) ($company[0]['name'] ?? $company[0]['company_name'] ?? '-');
+            $companyName = (string) ($company[0]['name'] ?? '-');
             $nextWeek = null;
             $alreadyDone = false;
 
