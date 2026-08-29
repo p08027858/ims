@@ -174,26 +174,15 @@ final class DailyLogService
             return null;
         }
 
-        $statusGroups = [
-            ['submitted', 'pending'],
-            ['revision_requested', 'draft', 'reviewed'],
-        ];
-
-        $log = null;
-        foreach ($statusGroups as $statuses) {
-            $rows = $this->client->restGet(
-                'daily_logs',
-                'internship_id=in.(' . implode(',', $internshipIds) . ')&status=in.(' . implode(',', $statuses) . ')&order=created_at.asc&limit=1&select=*'
-            );
-            if (isset($rows[0])) {
-                $log = $rows[0];
-                break;
-            }
-        }
-
-        if ($log === null) {
+        $rows = $this->client->restGet(
+            'daily_logs',
+            'internship_id=in.(' . implode(',', $internshipIds) . ')&status=in.(submitted,pending)&order=created_at.asc&limit=1&select=*'
+        );
+        if (!isset($rows[0])) {
             return null;
         }
+
+        $log = $rows[0];
 
         try {
             $log['attachments'] = $this->client->restGet('daily_log_attachments', 'daily_log_id=eq.' . $log['id'] . '&select=file_name,file_path');
@@ -242,13 +231,12 @@ final class DailyLogService
 
         return $log;
     }
-
     public function review(int $logId, string $decision, string $comment, string $reviewerUserId, string $reviewerRole): void
     {
         if (!in_array($decision, ['reviewed', 'revision_requested'], true)) {
             throw new AuthException('VALIDATION_ERROR', 'Invalid daily log status.');
         }
-        $rows = $this->client->restGet('daily_logs', 'id=eq.' . $logId . '&status=eq.submitted&select=id,internship_id');
+        $rows = $this->client->restGet('daily_logs', 'id=eq.' . $logId . '&status=in.(submitted,pending)&select=id,internship_id,status');
         if (!isset($rows[0])) {
             throw new AuthException('VALIDATION_ERROR', 'Daily log not found or already reviewed.');
         }
