@@ -169,6 +169,10 @@ final class EvaluationController
         return match ($e->errorCode) {
             'SIGNATURE_REQUIRED' => 'กรุณาลงลายเซ็นก่อนส่งแบบประเมิน',
             'VALIDATION_ERROR' => $e->getMessage() !== '' ? $e->getMessage() : 'ข้อมูลแบบประเมินไม่ถูกต้อง',
+            'EVALUATION_SAVE_FAILED',
+            'EVALUATION_SCORE_SAVE_FAILED',
+            'SIGNATURE_SAVE_FAILED',
+            'EVALUATION_FINALIZE_FAILED' => $e->getMessage() !== '' ? $e->getMessage() : 'บันทึกแบบประเมินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
             default => 'บันทึกแบบประเมินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
         };
     }

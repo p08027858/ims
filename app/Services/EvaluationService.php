@@ -277,10 +277,10 @@ final class EvaluationService
         $payload = [
             'internship_id' => $internshipId,
             'template_id' => (int) $template['id'],
-            'evaluator_user_id' => $evaluatorUserId,
+            'evaluator_id' => $evaluatorUserId,
             'week_number' => $weekNumber,
             'total_score' => round($total, 2),
-            'overall_comment' => trim($overallComment) !== '' ? trim($overallComment) : null,
+            'comments' => trim($overallComment) !== '' ? trim($overallComment) : null,
         ];
 
         try {
@@ -292,10 +292,15 @@ final class EvaluationService
                 'internship_id' => $internshipId,
                 'template_id' => (int) $template['id'],
                 'week_number' => $weekNumber,
-                'evaluator_user_id' => $evaluatorUserId,
+                'evaluator_id' => $evaluatorUserId,
                 'payload_keys' => array_keys($payload),
             ]);
-            throw new AuthException('EVALUATION_SAVE_FAILED', 'ไม่สามารถบันทึกข้อมูลแบบประเมินได้ กรุณาตรวจสอบโครงสร้างข้อมูลการประเมิน');
+            throw $this->translateSupabaseFailure(
+                'EVALUATION_SAVE_FAILED',
+                'บันทึกตาราง evaluations ไม่สำเร็จ',
+                $e,
+                ['expected_columns' => ['internship_id', 'template_id', 'evaluator_id', 'week_number', 'total_score', 'comments']]
+            );
         }
 
         $evaluationId = (int) ($evalRows[0]['id'] ?? $existing['id'] ?? 0);
@@ -317,7 +322,12 @@ final class EvaluationService
                 'score_count' => count($fullScoreRows),
                 'criteria_ids' => array_column($fullScoreRows, 'criteria_id'),
             ]);
-            throw new AuthException('EVALUATION_SCORE_SAVE_FAILED', 'ไม่สามารถบันทึกคะแนนแบบประเมินได้ กรุณาตรวจสอบหัวข้อประเมินและคะแนนที่กรอก');
+            throw $this->translateSupabaseFailure(
+                'EVALUATION_SCORE_SAVE_FAILED',
+                'บันทึกตาราง evaluation_scores ไม่สำเร็จ',
+                $e,
+                ['expected_columns' => ['evaluation_id', 'criteria_id', 'score']]
+            );
         }
 
         try {
@@ -327,23 +337,32 @@ final class EvaluationService
         } catch (\Throwable $e) {
             $this->logSubmissionFailure('create_signature', $e, [
                 'evaluation_id' => $evaluationId,
-                'evaluator_user_id' => $evaluatorUserId,
+                'evaluator_id' => $evaluatorUserId,
             ]);
-            throw new AuthException('SIGNATURE_SAVE_FAILED', 'ไม่สามารถบันทึกลายเซ็นดิจิทัลได้ กรุณาลองลงลายเซ็นใหม่อีกครั้ง');
+            throw $this->translateSupabaseFailure(
+                'SIGNATURE_SAVE_FAILED',
+                'บันทึกตาราง digital_signatures ไม่สำเร็จ',
+                $e,
+                ['expected_columns' => ['user_id', 'signature_url']]
+            );
         }
 
         try {
             $this->client->restUpdate('evaluations', 'id=eq.' . $evaluationId, [
-                'signature_id' => $signature['id'],
                 'status' => 'submitted',
-                'submitted_at' => date('c'),
+                'evaluation_date' => date('c'),
             ]);
         } catch (\Throwable $e) {
             $this->logSubmissionFailure('finalize_evaluation', $e, [
                 'evaluation_id' => $evaluationId,
                 'signature_id' => $signature['id'] ?? null,
             ]);
-            throw new AuthException('EVALUATION_FINALIZE_FAILED', 'บันทึกคะแนนได้แล้ว แต่ปิดการส่งแบบประเมินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+            throw $this->translateSupabaseFailure(
+                'EVALUATION_FINALIZE_FAILED',
+                'อัปเดตสถานะแบบประเมินไม่สำเร็จ',
+                $e,
+                ['expected_columns' => ['status', 'evaluation_date']]
+            );
         }
 
         if ($weekNumber === null) {
@@ -361,6 +380,41 @@ final class EvaluationService
             $e->getMessage(),
             json_encode($context, JSON_UNESCAPED_UNICODE)
         ));
+    }
+
+    private function translateSupabaseFailure(string $code, string $fallbackMessage, \Throwable $e, array $context = []): AuthException
+    {
+        if ($e instanceof SupabaseException) {
+            $details = [
+                'status_code' => $e->statusCode,
+                'body' => $e->body,
+                'context' => $context,
+            ];
+            $message = $this->buildSupabaseMessage($fallbackMessage, $e);
+            return new AuthException($code, $message, $details);
+        }
+
+        return new AuthException($code, $fallbackMessage, [
+            'context' => $context,
+            'cause' => $e->getMessage(),
+        ]);
+    }
+
+    private function buildSupabaseMessage(string $fallbackMessage, SupabaseException $e): string
+    {
+        $parts = [];
+        foreach (['message', 'msg', 'hint', 'details', 'code'] as $key) {
+            $value = $e->body[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                $parts[] = trim($value);
+            }
+        }
+
+        if ($parts === []) {
+            return $fallbackMessage;
+        }
+
+        return $fallbackMessage . ': ' . implode(' | ', array_unique($parts));
     }
     private function findEvaluation(int $internshipId, int $templateId, ?int $weekNumber): ?array
     {

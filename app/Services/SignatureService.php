@@ -39,17 +39,16 @@ final class SignatureService
         }
 
         $filename = $documentType . '-' . Uuid::v4() . '.png';
-        $path = $this->drive->upload('signatures', $filename, $binary, 'image/png', $userId);
+        $signatureUrl = $this->drive->upload('signatures', $filename, $binary, 'image/png', $userId);
+        if ($signatureUrl === '') {
+            $signatureUrl = $base64Png;
+        }
 
         $rows = $this->client->restInsert('digital_signatures', [
             'user_id' => $userId,
-            'signature_image_path' => $path,
-            'signed_document_type' => $documentType,
-            'signed_document_id' => $documentId,
-            'ip_address' => $ip,
-            'device_info' => mb_substr($userAgent, 0, 255),
+            'signature_url' => $signatureUrl,
         ]);
 
-        return ['id' => $rows[0]['id'], 'signed_at' => $rows[0]['signed_at']];
+        return ['id' => $rows[0]['id'], 'signed_at' => (string) ($rows[0]['created_at'] ?? '')];
     }
 }
