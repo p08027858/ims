@@ -126,7 +126,7 @@ final class StudentTimelineService
         }
 
         if ($tab === 'evaluation') {
-            $rows = $this->client->restGet('evaluations', 'internship_id=eq.' . $internshipId . '&order=created_at.desc&select=created_at,total_score,grade,status,week_number,evaluation_templates(evaluator_type)');
+            $rows = $this->client->restGet('evaluations', 'internship_id=eq.' . $internshipId . '&order=created_at.desc&select=created_at,total_score,status,week_number,evaluation_templates(evaluator_type)');
             foreach ($rows as $evaluation) {
                 $type = $evaluation['evaluation_templates']['evaluator_type'] ?? '';
                 $label = match ($type) {
@@ -136,7 +136,7 @@ final class StudentTimelineService
                     default => (string) $type,
                 };
                 $scoreText = $evaluation['status'] === 'submitted'
-                    ? $label . ': ' . $evaluation['total_score'] . (!empty($evaluation['grade']) ? ' เกรด ' . $evaluation['grade'] : '')
+                    ? $label . ': ' . $evaluation['total_score']
                     : $label . ' (ร่าง)';
                 $evaluationDate = substr((string) ($evaluation['created_at'] ?? ''), 0, 10);
                 if ($evaluationDate === '') {
