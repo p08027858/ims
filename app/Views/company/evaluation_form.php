@@ -1,10 +1,6 @@
 <?php
 /**
- * Weekly evaluation form (company_weekly template, max 20). Adapted from design-reference/_10
- * ("Criteria Scoring" / "Comments & Suggestions" / "Digital Signature" sections). Reuses
- * partials/signature_pad.php so the pad behaves identically everywhere it appears. Wired to
- * App\Controllers\EvaluationController (Phase 7) — GET/POST /company/evaluations/weekly/{id}.
- * Submit button must stay disabled until signature_image has a value (RULE-EVAL-04).
+ * Weekly evaluation form for company supervisors.
  */
 $notFound = $notFound ?? false;
 $internshipId = $internshipId ?? 0;
@@ -40,7 +36,7 @@ $maxScore = array_sum(array_column($criteria, 'max'));
       <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Support\Session::csrfToken()) ?>"/>
       <input type="hidden" name="week_number" value="<?= (int) $weekNumber ?>"/>
       <div class="flex flex-col gap-6">
-        <h2 class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode">Criteria Scoring</h2>
+        <h2 class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode">หัวข้อการประเมิน</h2>
         <?php foreach ($criteria as $c): ?>
           <div class="flex flex-col gap-2" data-criteria-id="<?= $c['id'] ?>" data-max="<?= $c['max'] ?>">
             <div class="flex justify-between items-center">
@@ -62,8 +58,8 @@ $maxScore = array_sum(array_column($criteria, 'max'));
       </div>
 
       <div class="flex flex-col gap-2">
-        <h2 class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode">Comments &amp; Suggestions</h2>
-        <textarea name="overall_comment" rows="4" placeholder="ความเห็นเพิ่มเติม..."
+        <h2 class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode">ความคิดเห็นและข้อเสนอแนะ</h2>
+        <textarea name="overall_comment" rows="4" placeholder="ความคิดเห็นเพิ่มเติม..."
                   class="w-full bg-surface dark:bg-surface-container-high/10 rounded-2xl p-5 font-body-md text-body-md text-on-surface dark:text-text-dark-mode resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-inner"></textarea>
       </div>
 
@@ -105,10 +101,9 @@ $maxScore = array_sum(array_column($criteria, 'max'));
     document.getElementById('total-score').textContent = `${total}/${max}`;
   }
 
-  // RULE-EVAL-04: cannot submit without a drawn signature.
   const sigInput = document.querySelector('input[name="signature_image"]');
   const submitBtn = document.getElementById('submit-eval-btn');
   new MutationObserver(() => { submitBtn.disabled = !sigInput.value; }).observe(sigInput, { attributes: true, attributeFilter: ['value'] });
   sigInput?.addEventListener('input', () => { submitBtn.disabled = !sigInput.value; });
-  setInterval(() => { submitBtn.disabled = !sigInput.value; }, 500); // canvas sets .value via JS, not always dispatching 'input'
+  setInterval(() => { submitBtn.disabled = !sigInput.value; }, 500);
 </script>

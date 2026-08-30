@@ -316,18 +316,20 @@ final class EvaluationService
         );
 
         try {
-            $this->client->restInsert('evaluation_scores', $fullScoreRows, 'evaluation_id,criteria_id');
+            $this->client->restDelete('evaluation_scores', 'evaluation_id=eq.' . $evaluationId);
+            $this->client->restInsert('evaluation_scores', $fullScoreRows);
         } catch (\Throwable $e) {
             $this->logSubmissionFailure('persist_scores', $e, [
                 'evaluation_id' => $evaluationId,
                 'score_count' => count($fullScoreRows),
                 'criteria_ids' => array_column($fullScoreRows, 'criteria_id'),
+                'write_mode' => 'delete_then_insert',
             ]);
             throw $this->translateSupabaseFailure(
                 'EVALUATION_SCORE_SAVE_FAILED',
                 'บันทึกตาราง evaluation_scores ไม่สำเร็จ',
                 $e,
-                ['expected_columns' => ['evaluation_id', 'criteria_id', 'score']]
+                ['expected_columns' => ['evaluation_id', 'criteria_id', 'score'], 'write_mode' => 'delete_then_insert']
             );
         }
 
@@ -544,7 +546,8 @@ final class EvaluationService
             $newRows[] = ['evaluation_id' => $evaluationId, 'criteria_id' => $criteriaId, 'score' => $score];
         }
 
-        $this->client->restInsert('evaluation_scores', $newRows, 'evaluation_id,criteria_id');
+        $this->client->restDelete('evaluation_scores', 'evaluation_id=eq.' . $evaluationId);
+        $this->client->restInsert('evaluation_scores', $newRows);
         $this->client->restUpdate('evaluations', 'id=eq.' . $evaluationId, ['total_score' => round($total, 2)]);
 
         (new AuditLogger($this->client))->log(
