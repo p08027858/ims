@@ -40,8 +40,8 @@ final class AttendanceController
                 $internship = $this->getInternshipById((int) $context['id']);
                 $company = [
                     'name' => (string) ($context['company_name'] ?? ''),
-                    'latitude' => (float) $context['latitude'],
-                    'longitude' => (float) $context['longitude'],
+                    'latitude' => $context['latitude'],
+                    'longitude' => $context['longitude'],
                     'gps_radius_m' => (float) $context['gps_radius_m'],
                 ];
                 $todayAttendance = $this->normalizeAttendanceRow(
@@ -64,6 +64,7 @@ final class AttendanceController
             ? (float) ($company['gps_radius_m'] ?? $defaultRadius)
             : $defaultRadius;
         $elapsedHours = $this->elapsedHoursFromAttendance($todayAttendance);
+        $photoRequired = $settings->getBool('attendance_photo_required', false);
 
         return [
             'noActiveInternship' => $context === null && $internship === null,
@@ -73,7 +74,7 @@ final class AttendanceController
             'companyLng' => $company['longitude'] ?? null,
             'allowedRadiusM' => $allowedRadiusM,
             'minHoursBeforeCheckout' => $minHoursBeforeCheckout,
-            'photoRequired' => false,
+            'photoRequired' => $photoRequired,
             'elapsedHours' => $elapsedHours,
             'canCheckout' => $elapsedHours >= $minHoursBeforeCheckout,
             'internship' => $internship,

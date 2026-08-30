@@ -38,7 +38,7 @@ final class AttendanceService
     }
 
     /**
-     * @return array{id:int,student_id:int,company_id:int,company_name:string,latitude:float,longitude:float,gps_radius_m:float,min_hours_before_checkout:float}|null
+     * @return array{id:int,student_id:int,company_id:int,company_name:string,latitude:?float,longitude:?float,gps_radius_m:float,min_hours_before_checkout:float}|null
      */
     public function getActiveInternshipContext(string $userId): ?array
     {
@@ -84,14 +84,20 @@ final class AttendanceService
             $batches = [];
         }
 
+        $defaultRadius = $this->settings->getFloat('default_gps_radius_m', 100.0);
+        $companyLat = $companies[0]['latitude'] ?? null;
+        $companyLng = $companies[0]['longitude'] ?? null;
+
         return [
             'id' => (int) $internship['id'],
             'student_id' => (int) ($internship['student_id'] ?? 0),
             'company_id' => (int) $internship['company_id'],
             'company_name' => (string) ($companies[0]['name'] ?? ''),
-            'latitude' => (float) ($companies[0]['latitude'] ?? 0),
-            'longitude' => (float) ($companies[0]['longitude'] ?? 0),
-            'gps_radius_m' => (float) ($companies[0]['gps_radius_m'] ?? 100),
+            'latitude' => $companyLat !== null && $companyLat !== '' ? (float) $companyLat : null,
+            'longitude' => $companyLng !== null && $companyLng !== '' ? (float) $companyLng : null,
+            'gps_radius_m' => isset($companies[0]['gps_radius_m']) && $companies[0]['gps_radius_m'] !== null
+                ? (float) $companies[0]['gps_radius_m']
+                : $defaultRadius,
             'min_hours_before_checkout' => isset($batches[0]['min_hours_before_checkout'])
                 ? (float) $batches[0]['min_hours_before_checkout']
                 : $this->settings->getFloat('min_hours_before_checkout', 4.0),
@@ -119,6 +125,7 @@ final class AttendanceService
         if ($studentId <= 0) {
             throw new ApiException(422, 'STUDENT_NOT_FOUND', 'No student_id was resolved for this attendance record.');
         }
+        $this->assertGpsPolicyConfigured($context);
         $existing = $this->getTodayAttendance($internshipId);
 
         if ($existing !== null && !empty($existing['check_in_at'])) {
@@ -181,6 +188,7 @@ final class AttendanceService
     public function checkout(array $context, float $lat, float $lng, float $accuracyM): array
     {
         $internshipId = (int) $context['id'];
+        $this->assertGpsPolicyConfigured($context);
         $existing = $this->getTodayAttendance($internshipId);
 
         if ($existing === null || empty($existing['check_in_at'])) {
@@ -310,6 +318,17 @@ final class AttendanceService
     {
         $source = (string) ($row['check_in_at'] ?? $row['created_at'] ?? date('c'));
         return substr($source, 0, 10);
+    }
+
+    private function assertGpsPolicyConfigured(array $context): void
+    {
+        if (!isset($context['latitude'], $context['longitude']) || $context['latitude'] === null || $context['longitude'] === null) {
+            throw new ApiException(
+                422,
+                'GPS_NOT_CONFIGURED',
+                'Company GPS location is not configured yet. Please contact your coordinator.'
+            );
+        }
     }
 
     private static function deriveHours(array $row): float

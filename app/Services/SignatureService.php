@@ -5,9 +5,7 @@ namespace App\Services;
 use App\Support\Uuid;
 
 /**
- * digital_signatures (LEAVE_EVALUATION_SIGNATURE.md §3). RULE-SIG-01: immutable once created —
- * this class deliberately has no update()/delete() method, and no controller/route anywhere in
- * the app calls DELETE on this table (TC-SIG-002).
+ * Handles immutable digital signature records.
  */
 final class SignatureService
 {
@@ -21,7 +19,7 @@ final class SignatureService
     }
 
     /**
-     * @param string $documentType one of signed_document_type enum (DATABASE.md §0.2)
+     * @param string $documentType one of signed_document_type enum
      * @return array{id:int,signed_at:string}
      */
     public function create(string $userId, string $documentType, int $documentId, string $base64Png, string $ip, string $userAgent): array
@@ -34,6 +32,7 @@ final class SignatureService
         if (preg_match('/^data:image\/png;base64,(.+)$/', $base64Png, $m)) {
             $data = $m[1];
         }
+
         $binary = base64_decode($data, true);
         if ($binary === false) {
             throw new AuthException('VALIDATION_ERROR', 'ข้อมูลลายเซ็นไม่ถูกต้อง');
@@ -50,6 +49,7 @@ final class SignatureService
             'ip_address' => $ip,
             'device_info' => mb_substr($userAgent, 0, 255),
         ]);
+
         return ['id' => $rows[0]['id'], 'signed_at' => $rows[0]['signed_at']];
     }
 }

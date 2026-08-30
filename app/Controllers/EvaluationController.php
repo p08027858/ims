@@ -8,8 +8,8 @@ use App\Services\EvaluationService;
 use App\Services\SettingsService;
 use App\Services\SupabaseClient;
 use App\Support\Session;
+use Throwable;
 
-/** evaluations/evaluation_scores/digital_signatures (Phase 7). */
 final class EvaluationController
 {
     private EvaluationService $evaluations;
@@ -18,10 +18,6 @@ final class EvaluationController
     {
         $this->evaluations = new EvaluationService();
     }
-
-    // -----------------------------------------------------------------
-    // Company — weekly
-    // -----------------------------------------------------------------
 
     public function weeklyListData(array $params): array
     {
@@ -38,10 +34,6 @@ final class EvaluationController
         $this->doSubmit((int) $params['id'], 'company_weekly', '/company/evaluations/weekly');
     }
 
-    // -----------------------------------------------------------------
-    // Company — final
-    // -----------------------------------------------------------------
-
     public function companyFinalListData(array $params): array
     {
         return ['students' => $this->evaluations->listEligibleForCompanyFinal($this->resolveCompanyId()), 'weekly' => false, 'listTitle' => 'ประเมินปลายภาค (ผู้ประกอบการ)', 'linkBase' => '/company/evaluations/final'];
@@ -56,10 +48,6 @@ final class EvaluationController
     {
         $this->doSubmit((int) $params['id'], 'company_final', '/company/evaluations/final');
     }
-
-    // -----------------------------------------------------------------
-    // Teacher — final
-    // -----------------------------------------------------------------
 
     public function teacherFinalListData(array $params): array
     {
@@ -76,11 +64,6 @@ final class EvaluationController
         $this->doSubmit((int) $params['id'], 'teacher_final', '/teacher/evaluations/final');
     }
 
-    // -----------------------------------------------------------------
-    // Student — history (RULE-EVAL-06)
-    // -----------------------------------------------------------------
-
-    /** Shapes onto student/evaluation_history.php's existing $scoreVisible/$weeklyScores/$companyFinal/$teacherFinal vars. */
     public function studentHistoryData(array $params): array
     {
         $scoreVisible = (new SettingsService())->getBool('score_visible_to_student', true);
@@ -114,16 +97,13 @@ final class EvaluationController
         return ['scoreVisible' => true, 'weeklyScores' => $weeklyScores, 'companyFinal' => $companyFinal, 'teacherFinal' => $teacherFinal];
     }
 
-    // -----------------------------------------------------------------
-    // Shared helpers
-    // -----------------------------------------------------------------
-
     private function buildFormData(int $internshipId, string $evaluatorType, ?string $title = null, ?string $formAction = null): array
     {
         $context = $this->evaluations->getFormContext($internshipId, $evaluatorType);
         if ($context === null) {
             return ['notFound' => true];
         }
+
         return [
             'notFound' => false,
             'internshipId' => $internshipId,
@@ -139,6 +119,7 @@ final class EvaluationController
     private function doSubmit(int $internshipId, string $evaluatorType, string $listPath): void
     {
         $user = Session::user();
+
         try {
             $weekNumber = isset($_POST['week_number']) && $_POST['week_number'] !== '' ? (int) $_POST['week_number'] : null;
             $scores = is_array($_POST['scores'] ?? null) ? $_POST['scores'] : [];
@@ -153,14 +134,43 @@ final class EvaluationController
                 (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'),
                 (string) ($_SERVER['HTTP_USER_AGENT'] ?? '')
             );
-            // DoD example action (AI_AGENT_PHASES.md Phase 9): "submit evaluation" must appear in audit_logs.
+
             (new AuditLogger())->log((string) $user['id'], (string) $user['role'], 'create', 'evaluations', 'evaluations', (int) $result['evaluation_id'], null, ['status' => 'submitted', 'total_score' => $result['total_score']]);
             header('Location: ' . $listPath);
         } catch (AuthException $e) {
-            Session::flashError($e->getMessage());
+            error_log(sprintf(
+                '[evaluation.submit] code=%s internship_id=%d evaluator_type=%s user_id=%s details=%s cause=%s',
+                $e->errorCode,
+                $internshipId,
+                $evaluatorType,
+                (string) ($user['id'] ?? ''),
+                json_encode($e->details, JSON_UNESCAPED_UNICODE),
+                $e->getMessage()
+            ));
+            Session::flashError($this->friendlySubmitError($e));
+            header('Location: ' . $listPath . '/' . $internshipId);
+        } catch (Throwable $e) {
+            error_log(sprintf(
+                '[evaluation.submit] unexpected internship_id=%d evaluator_type=%s user_id=%s message=%s',
+                $internshipId,
+                $evaluatorType,
+                (string) ($user['id'] ?? ''),
+                $e->getMessage()
+            ));
+            Session::flashError('บันทึกแบบประเมินไม่สำเร็จ กรุณาตรวจสอบข้อมูลให้ครบถ้วนและลองใหม่อีกครั้ง');
             header('Location: ' . $listPath . '/' . $internshipId);
         }
+
         exit;
+    }
+
+    private function friendlySubmitError(AuthException $e): string
+    {
+        return match ($e->errorCode) {
+            'SIGNATURE_REQUIRED' => 'กรุณาลงลายเซ็นก่อนส่งแบบประเมิน',
+            'VALIDATION_ERROR' => $e->getMessage() !== '' ? $e->getMessage() : 'ข้อมูลแบบประเมินไม่ถูกต้อง',
+            default => 'บันทึกแบบประเมินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+        };
     }
 
     private function resolveCompanyId(): int

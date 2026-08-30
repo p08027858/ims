@@ -1,10 +1,6 @@
 <?php
 /**
- * Reusable digital signature pad (canvas). Include this inside any evaluation/approval form.
- * On submit, the hidden input named by $signatureFieldName carries a base64 PNG matching the
- * shape expected by POST /signatures in Internship_Project_Blueprint/API_SPEC.md §9:
- *   "data:image/png;base64,...."
- * The containing <form> is responsible for actually submitting it (Phase 2+ — no real API call yet).
+ * Reusable digital signature pad for evaluation and approval forms.
  */
 $signatureFieldName = $signatureFieldName ?? 'signature_image';
 $padId = $padId ?? 'sig-' . substr(md5($signatureFieldName), 0, 8);
@@ -30,7 +26,7 @@ $padId = $padId ?? 'sig-' . substr(md5($signatureFieldName), 0, 8);
   const hiddenInput = document.getElementById('<?= $padId ?>-input');
   const clearBtn = document.getElementById('<?= $padId ?>-clear');
   const ctx = canvas.getContext('2d');
-  let drawing = false, hasDrawn = false;
+  let drawing = false;
 
   function resize() {
     const ratio = window.devicePixelRatio || 1;
@@ -41,6 +37,7 @@ $padId = $padId ?? 'sig-' . substr(md5($signatureFieldName), 0, 8);
     ctx.lineCap = 'round';
     ctx.strokeStyle = '#1b1b24';
   }
+
   window.addEventListener('resize', resize);
   resize();
 
@@ -49,13 +46,33 @@ $padId = $padId ?? 'sig-' . substr(md5($signatureFieldName), 0, 8);
     const point = e.touches ? e.touches[0] : e;
     return { x: point.clientX - rect.left, y: point.clientY - rect.top };
   }
-  function start(e) { drawing = true; hasDrawn = true; placeholder.classList.add('hidden'); const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
-  function move(e) { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+
+  function start(e) {
+    drawing = true;
+    placeholder.classList.add('hidden');
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+  }
+
+  function move(e) {
+    if (!drawing) {
+      return;
+    }
+    e.preventDefault();
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+
   function end() {
-    if (!drawing) return;
+    if (!drawing) {
+      return;
+    }
     drawing = false;
     hiddenInput.value = canvas.toDataURL('image/png');
   }
+
   canvas.addEventListener('mousedown', start);
   canvas.addEventListener('mousemove', move);
   window.addEventListener('mouseup', end);
@@ -66,7 +83,6 @@ $padId = $padId ?? 'sig-' . substr(md5($signatureFieldName), 0, 8);
   clearBtn.addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     hiddenInput.value = '';
-    hasDrawn = false;
     placeholder.classList.remove('hidden');
   });
 })();

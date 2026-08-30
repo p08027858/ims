@@ -1,11 +1,7 @@
 <?php
 /**
- * Final evaluation form — used for BOTH teacher_final (max 100, Template C) and company_final
- * (max 100, Template B), reused across /teacher/evaluations/final/{id} and
- * /company/evaluations/final/{id} the same way company/daily_log_review.php is shared across
- * company/teacher (Phase 6 precedent) — differs only by $formTitle/$formAction/$criteria passed
- * in. Uses numeric score inputs instead of stars since max scores vary per criterion
- * (LEAVE_EVALUATION_SIGNATURE.md §2.2). Wired to App\Controllers\EvaluationController (Phase 7).
+ * Final evaluation form used for both `teacher_final` and `company_final`.
+ * The controller passes the title, action, and criteria for each evaluator type.
  */
 $notFound = $notFound ?? false;
 $internshipId = $internshipId ?? 0;
@@ -58,7 +54,7 @@ $maxScore = array_sum(array_column($criteria, 'max'));
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode" for="overall_comment">ความเห็นภาพรวม</label>
+        <label class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode" for="overall_comment">ความคิดเห็นภาพรวม</label>
         <textarea id="overall_comment" name="overall_comment" rows="4" class="w-full bg-surface dark:bg-surface-container-high/10 rounded-2xl p-5 font-body-md text-body-md text-on-surface dark:text-text-dark-mode resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-inner"></textarea>
       </div>
 
@@ -76,15 +72,18 @@ $maxScore = array_sum(array_column($criteria, 'max'));
     let total = 0;
     document.querySelectorAll('.score-input').forEach(i => {
       const max = Number(i.dataset.max);
-      let v = Math.max(0, Math.min(max, Number(i.value) || 0));
-      i.value = v;
-      total += v;
+      const nextValue = Math.max(0, Math.min(max, Number(i.value) || 0));
+      i.value = nextValue;
+      total += nextValue;
     });
     document.getElementById('total-score').textContent = `${total}/<?= $maxScore ?>`;
   }
+
   document.querySelectorAll('.score-input').forEach(i => i.addEventListener('input', updateTotal));
 
   const sigInput = document.querySelector('input[name="signature_image"]');
   const submitBtn = document.getElementById('submit-eval-btn');
-  setInterval(() => { submitBtn.disabled = !sigInput.value; }, 500);
+  setInterval(() => {
+    submitBtn.disabled = !sigInput.value;
+  }, 500);
 </script>
