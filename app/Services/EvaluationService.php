@@ -278,6 +278,7 @@ final class EvaluationService
             'internship_id' => $internshipId,
             'template_id' => (int) $template['id'],
             'evaluator_id' => $evaluatorUserId,
+            'evaluator_type' => $evaluatorType,
             'week_number' => $weekNumber,
             'total_score' => round($total, 2),
             'comments' => trim($overallComment) !== '' ? trim($overallComment) : null,
@@ -299,7 +300,7 @@ final class EvaluationService
                 'EVALUATION_SAVE_FAILED',
                 'บันทึกตาราง evaluations ไม่สำเร็จ',
                 $e,
-                ['expected_columns' => ['internship_id', 'template_id', 'evaluator_id', 'week_number', 'total_score', 'comments']]
+                ['expected_columns' => ['internship_id', 'template_id', 'evaluator_id', 'evaluator_type', 'week_number', 'total_score', 'comments']]
             );
         }
 
@@ -402,6 +403,27 @@ final class EvaluationService
 
     private function buildSupabaseMessage(string $fallbackMessage, SupabaseException $e): string
     {
+        $body = $e->body;
+        $rawMessage = '';
+        foreach (['message', 'msg'] as $key) {
+            if (isset($body[$key]) && is_string($body[$key]) && trim($body[$key]) !== '') {
+                $rawMessage = trim($body[$key]);
+                break;
+            }
+        }
+
+        if ($rawMessage !== '') {
+            if (preg_match("/null value in column '([^']+)'/i", $rawMessage, $m)) {
+                return $fallbackMessage . ': คอลัมน์ ' . $m[1] . ' ห้ามเป็นค่าว่าง';
+            }
+            if (preg_match("/column '([^']+)'/i", $rawMessage, $m)) {
+                return $fallbackMessage . ': ไม่พบคอลัมน์ ' . $m[1] . ' ในฐานข้อมูล';
+            }
+            if (preg_match("/foreign key/i", $rawMessage)) {
+                return $fallbackMessage . ': ข้อมูลอ้างอิงไม่ถูกต้องหรือไม่พบข้อมูลที่เชื่อมโยง';
+            }
+        }
+
         $parts = [];
         foreach (['message', 'msg', 'hint', 'details', 'code'] as $key) {
             $value = $e->body[$key] ?? null;
