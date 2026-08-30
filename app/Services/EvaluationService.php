@@ -353,7 +353,6 @@ final class EvaluationService
         try {
             $this->client->restUpdate('evaluations', 'id=eq.' . $evaluationId, [
                 'status' => 'submitted',
-                'evaluation_date' => date('c'),
             ]);
         } catch (\Throwable $e) {
             $this->logSubmissionFailure('finalize_evaluation', $e, [
@@ -364,7 +363,7 @@ final class EvaluationService
                 'EVALUATION_FINALIZE_FAILED',
                 'อัปเดตสถานะแบบประเมินไม่สำเร็จ',
                 $e,
-                ['expected_columns' => ['status', 'evaluation_date']]
+                ['expected_columns' => ['status']]
             );
         }
 
