@@ -7,6 +7,7 @@ $internshipId = $internshipId ?? 0;
 $student = $student ?? ['name' => 'สมชาย ใจดี'];
 $weekNumber = $weekNumber ?? 4;
 $formTitle = $formTitle ?? null;
+$formAction = $formAction ?? ('/company/evaluations/weekly/' . $internshipId);
 $formError = $formError ?? null;
 $criteria = $criteria ?? [
     ['id' => 1, 'name' => 'ความรับผิดชอบต่องาน', 'max' => 5],
@@ -32,9 +33,11 @@ $maxScore = array_sum(array_column($criteria, 'max'));
       <div class="bg-error-container text-on-error-container rounded-lg p-4 font-body-md text-body-md" role="alert"><?= htmlspecialchars($formError) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="/company/evaluations/weekly/<?= $internshipId ?>" class="bg-surface-container-lowest dark:bg-surface-dark rounded-[24px] shadow-soft p-8 flex flex-col gap-8 border border-surface-variant dark:border-outline-variant/20">
+    <form method="post" action="<?= htmlspecialchars($formAction) ?>" class="bg-surface-container-lowest dark:bg-surface-dark rounded-[24px] shadow-soft p-8 flex flex-col gap-8 border border-surface-variant dark:border-outline-variant/20">
       <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Support\Session::csrfToken()) ?>"/>
-      <input type="hidden" name="week_number" value="<?= (int) $weekNumber ?>"/>
+      <?php if ($weekNumber !== null): ?>
+        <input type="hidden" name="week_number" value="<?= (int) $weekNumber ?>"/>
+      <?php endif; ?>
       <div class="flex flex-col gap-6">
         <h2 class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode">หัวข้อการประเมิน</h2>
         <?php foreach ($criteria as $c): ?>

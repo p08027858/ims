@@ -43,7 +43,17 @@ final class ReportService
         // persisted anywhere (only the letter grade is). Documented in ISSUES.md.
         $avgFinalScore = 0.0;
         if (!empty($ids)) {
-            $finals = $this->client->restGet('evaluations', 'internship_id=in.(' . implode(',', $ids) . ')&grade=not.is.null&select=total_score');
+            $templates = $this->client->restGet('evaluation_templates', 'evaluator_type=in.(company_final,teacher_final)&select=id');
+            $finalTemplateIds = array_map(static fn (array $row): int => (int) $row['id'], $templates);
+            $finals = [];
+            if (!empty($finalTemplateIds)) {
+                $finals = $this->client->restGet(
+                    'evaluations',
+                    'internship_id=in.(' . implode(',', $ids) . ')'
+                    . '&template_id=in.(' . implode(',', $finalTemplateIds) . ')'
+                    . '&status=eq.submitted&select=total_score'
+                );
+            }
             if (!empty($finals)) {
                 $avgFinalScore = round(array_sum(array_column($finals, 'total_score')) / count($finals), 1);
             }

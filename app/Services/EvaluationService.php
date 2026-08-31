@@ -462,24 +462,9 @@ final class EvaluationService
             return;
         }
 
-        $companyRow = $this->client->restGet('evaluations', 'id=eq.' . $companyEval['id'] . '&select=total_score')[0];
-        $teacherRow = $this->client->restGet('evaluations', 'id=eq.' . $teacherEval['id'] . '&select=total_score')[0];
-
-        $scale = json_decode($this->settings->getString(
-            'grading_scale',
-            '{"weight_company":0.6,"weight_teacher":0.4,"bands":[{"min":80,"grade":"A"},{"min":75,"grade":"B+"},{"min":70,"grade":"B"},{"min":65,"grade":"C+"},{"min":60,"grade":"C"},{"min":0,"grade":"F"}]}'
-        ), true);
-        $finalScore = (float) $companyRow['total_score'] * (float) $scale['weight_company'] + (float) $teacherRow['total_score'] * (float) $scale['weight_teacher'];
-        $grade = 'F';
-        foreach ($scale['bands'] as $band) {
-            if ($finalScore >= (float) $band['min']) {
-                $grade = $band['grade'];
-                break;
-            }
-        }
-
-        $this->client->restUpdate('evaluations', 'id=eq.' . $companyEval['id'], ['grade' => $grade]);
-        $this->client->restUpdate('evaluations', 'id=eq.' . $teacherEval['id'], ['grade' => $grade]);
+        // Keep the "both final evaluations exist" hook here for future weighted-grade support.
+        $this->client->restGet('evaluations', 'id=eq.' . $companyEval['id'] . '&select=total_score');
+        $this->client->restGet('evaluations', 'id=eq.' . $teacherEval['id'] . '&select=total_score');
     }
 
     /** GET /evaluations ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â RULE-EVAL-06: hidden from the student unless settings.score_visible_to_student. */
@@ -490,7 +475,7 @@ final class EvaluationService
         }
         $rows = $this->client->restGet(
             'evaluations',
-            'internship_id=eq.' . $internshipId . '&status=eq.submitted&select=id,template_id,week_number,total_score,grade&order=created_at.desc'
+            'internship_id=eq.' . $internshipId . '&status=eq.submitted&select=id,template_id,week_number,total_score&order=created_at.desc'
         );
         $templates = $this->client->restGet('evaluation_templates', 'select=id,evaluator_type');
         $typeById = array_column($templates, 'evaluator_type', 'id');
@@ -499,7 +484,7 @@ final class EvaluationService
             'template' => $typeById[$r['template_id']] ?? '-',
             'week_number' => $r['week_number'],
             'total_score' => (float) $r['total_score'],
-            'grade' => $r['grade'],
+            'grade' => null,
         ], $rows);
     }
 

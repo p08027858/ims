@@ -272,8 +272,19 @@ final class InternshipService
             if ($totalHours < (float) $r['total_required_hours']) {
                 continue;
             }
-            $gradedEvals = $this->client->restGet('evaluations', 'internship_id=eq.' . $r['id'] . '&grade=not.is.null&select=id&limit=1');
-            if (empty($gradedEvals)) {
+            $finalTemplates = $this->client->restGet('evaluation_templates', 'evaluator_type=in.(company_final,teacher_final)&select=id');
+            $finalTemplateIds = array_map(static fn (array $row): int => (int) $row['id'], $finalTemplates);
+            if (count($finalTemplateIds) < 2) {
+                continue;
+            }
+            $submittedFinals = $this->client->restGet(
+                'evaluations',
+                'internship_id=eq.' . $r['id']
+                . '&template_id=in.(' . implode(',', $finalTemplateIds) . ')'
+                . '&status=eq.submitted&select=template_id'
+            );
+            $submittedTemplateIds = array_unique(array_map(static fn (array $row): int => (int) $row['template_id'], $submittedFinals));
+            if (count($submittedTemplateIds) < count($finalTemplateIds)) {
                 continue;
             }
             $pendingLeaves = $this->client->restGet('leave_requests', 'internship_id=eq.' . $r['id'] . '&status=eq.pending&select=id&limit=1');
