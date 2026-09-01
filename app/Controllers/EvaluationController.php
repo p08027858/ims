@@ -107,7 +107,10 @@ final class EvaluationController
     {
         $context = $this->evaluations->getFormContext($internshipId, $evaluatorType);
         if ($context === null) {
-            return ['notFound' => true];
+            return [
+                'notFound' => true,
+                'formError' => 'ยังไม่ได้กำหนดหัวข้อการประเมินสำหรับแบบประเมินนี้',
+            ];
         }
 
         return [

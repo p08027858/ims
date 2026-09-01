@@ -21,7 +21,7 @@ $maxScore = array_sum(array_column($criteria, 'max'));
   <?php if ($notFound): ?>
     <div class="flex flex-col items-center justify-center py-16 text-center">
       <span class="material-symbols-outlined text-5xl text-outline-variant mb-3">search_off</span>
-      <p class="font-body-md text-body-md text-on-surface-variant">ไม่พบการฝึกงานนี้ หรือยังไม่มีแบบประเมินที่รองรับ</p>
+      <p class="font-body-md text-body-md text-on-surface-variant"><?= htmlspecialchars($formError ?? 'ไม่พบการฝึกงานนี้ หรือยังไม่มีหัวข้อการประเมินที่พร้อมใช้งาน') ?></p>
     </div>
   <?php else: ?>
     <div>
