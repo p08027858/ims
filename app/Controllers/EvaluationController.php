@@ -26,7 +26,7 @@ final class EvaluationController
 
     public function weeklyFormData(array $params): array
     {
-        return $this->buildFormData((int) $params['id'], 'company_weekly');
+        return $this->buildCompanyFormData((int) $params['id'], 'company_weekly');
     }
 
     public function submitWeekly(array $params): void
@@ -41,7 +41,13 @@ final class EvaluationController
 
     public function companyFinalFormData(array $params): array
     {
-        return $this->buildFormData((int) $params['id'], 'company_final', 'ประเมินปลายภาค (ผู้ประกอบการ)', '/company/evaluations/final/' . (int) $params['id']);
+        $internshipId = (int) $params['id'];
+        return $this->buildCompanyFormData(
+            $internshipId,
+            'company_final',
+            'ประเมินปลายภาค (ผู้ประกอบการ)',
+            '/company/evaluations/final/' . $internshipId
+        );
     }
 
     public function submitCompanyFinal(array $params): void
@@ -121,6 +127,11 @@ final class EvaluationController
         $user = Session::user();
 
         try {
+            if (str_starts_with($evaluatorType, 'company_')
+                && !$this->evaluations->belongsToCompany($internshipId, $this->resolveCompanyId())) {
+                throw new AuthException('FORBIDDEN', 'ไม่พบการฝึกงานนี้ในความดูแลของสถานประกอบการ');
+            }
+
             $weekNumber = isset($_POST['week_number']) && $_POST['week_number'] !== '' ? (int) $_POST['week_number'] : null;
             $scores = is_array($_POST['scores'] ?? null) ? $_POST['scores'] : [];
             $result = $this->evaluations->submit(
@@ -182,6 +193,15 @@ final class EvaluationController
         $userId = (string) Session::user()['id'];
         $rows = (new SupabaseClient())->restGet('company_supervisors', 'user_id=eq.' . $userId . '&select=company_id');
         return (int) ($rows[0]['company_id'] ?? 0);
+    }
+
+    private function buildCompanyFormData(int $internshipId, string $evaluatorType, ?string $title = null, ?string $formAction = null): array
+    {
+        if (!$this->evaluations->belongsToCompany($internshipId, $this->resolveCompanyId())) {
+            return ['notFound' => true, 'formError' => 'ไม่พบการฝึกงานนี้ในความดูแลของสถานประกอบการ'];
+        }
+
+        return $this->buildFormData($internshipId, $evaluatorType, $title, $formAction);
     }
 
     private function resolveTeacherId(): int

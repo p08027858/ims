@@ -121,7 +121,8 @@ final class EvaluationService
     private function listEligible(string $internshipFilter, string $evaluatorType, bool $isWeekly): array
     {
         $query = $internshipFilter
-            . '&status=in.(approved,active,ongoing,in_progress,completed,pending_approval)'
+            // Keep historical but valid internships visible when a deployment introduces a new status.
+            . '&status=not.in.(cancelled,rejected,terminated)'
             . '&deleted_at=is.null&select=id,student_id,company_id,status';
 
         try {
@@ -130,7 +131,7 @@ final class EvaluationService
             error_log('IMS evaluation eligible fallback[deleted_at]: filter=' . $internshipFilter . ' message=' . $e->getMessage());
             $internships = $this->client->restGet(
                 'internships',
-                $internshipFilter . '&status=in.(approved,active,ongoing,in_progress,completed,pending_approval)&select=id,student_id,company_id,status'
+                $internshipFilter . '&status=not.in.(cancelled,rejected,terminated)&select=id,student_id,company_id,status'
             );
         }
 
@@ -201,6 +202,21 @@ final class EvaluationService
             'template' => $template,
             'week_number' => $weekNumber,
         ];
+    }
+
+    /** Verify that a company supervisor may access the requested internship. */
+    public function belongsToCompany(int $internshipId, int $companyId): bool
+    {
+        if ($internshipId <= 0 || $companyId <= 0) {
+            return false;
+        }
+
+        $rows = $this->client->restGet(
+            'internships',
+            'id=eq.' . $internshipId . '&company_id=eq.' . $companyId . '&select=id&limit=1'
+        );
+
+        return isset($rows[0]);
     }
 
     /**

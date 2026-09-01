@@ -312,7 +312,8 @@ final class InternshipService
         }
 
         $query = $scopeColumn . '=eq.' . $scopeId
-            . '&status=in.(approved,active,ongoing,completed,pending_approval)'
+            // New valid workflow statuses should not make a supervisee disappear from the dashboard.
+            . '&status=not.in.(cancelled,rejected,terminated)'
             . '&deleted_at=is.null'
             . '&select=id,student_id,company_id,total_required_hours,status'
             . '&order=created_at.desc';
@@ -324,7 +325,7 @@ final class InternshipService
             $rows = $this->client->restGet(
                 'internships',
                 $scopeColumn . '=eq.' . $scopeId
-                . '&status=in.(approved,active,ongoing,completed,pending_approval)'
+                . '&status=not.in.(cancelled,rejected,terminated)'
                 . '&select=id,student_id,company_id,total_required_hours,status'
                 . '&order=created_at.desc'
             );
