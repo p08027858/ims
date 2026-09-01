@@ -1,8 +1,8 @@
 <?php
 /**
- * Evaluation template list (Phase 8 item 5) — new page, not part of the 27 Stitch exports.
- * The evaluator_type enum only has 3 fixed values (DATABASE.md §0.2) so this lists exactly 3
- * rows always; each links to a criteria-editing form (RULE-EVAL-03 enforced there).
+ * Evaluation template list (Phase 8 item 5) - new page, not part of the 27 Stitch exports.
+ * The evaluator_type enum only has 3 fixed values (DATABASE.md section 0.2) so this lists
+ * exactly 3 rows always; each links to a criteria-editing form (RULE-EVAL-03 enforced there).
  */
 $templates = $templates ?? [
     ['id' => 1, 'label' => 'ประเมินรายสัปดาห์ (ผู้ประกอบการ)', 'max_score' => 20, 'criteria_count' => 4],
@@ -11,7 +11,7 @@ $templates = $templates ?? [
 <div class="flex flex-col gap-6">
   <div>
     <h1 class="font-headline-lg text-headline-lg text-on-surface dark:text-text-dark-mode">แบบประเมิน</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant">แก้ไขหัวข้อและคะแนนเต็มของแบบประเมินแต่ละประเภท (ผลรวมหัวข้อย่อยต้องเท่ากับคะแนนเต็มเสมอ)</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">แก้ไขหัวข้อและคะแนนเต็มของแบบประเมินแต่ละประเภท โดยผลรวมหัวข้อย่อยต้องเท่ากับคะแนนเต็มเสมอ</p>
   </div>
 
   <div class="flex flex-col gap-3">

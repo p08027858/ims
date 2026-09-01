@@ -18,8 +18,14 @@ final class EvaluationTemplateController
 
     public function listData(array $params): array
     {
-        $labels = ['company_weekly' => 'ประเมินรายสัปดาห์ (ผู้ประกอบการ)', 'company_final' => 'ประเมินปลายภาค (ผู้ประกอบการ)', 'teacher_final' => 'ประเมินปลายภาค (ครูนิเทศ)'];
+        $labels = [
+            'company_weekly' => 'ประเมินรายสัปดาห์ (ผู้ประกอบการ)',
+            'company_final' => 'ประเมินปลายภาค (ผู้ประกอบการ)',
+            'teacher_final' => 'ประเมินปลายภาค (ครูนิเทศ)',
+        ];
+
         $templates = $this->evaluations->listAllTemplatesWithCriteria();
+
         return [
             'templates' => array_map(static fn (array $t) => [
                 'id' => $t['id'],
@@ -36,6 +42,7 @@ final class EvaluationTemplateController
         if ($template === null) {
             return ['notFound' => true];
         }
+
         return [
             'notFound' => false,
             'templateId' => $template['id'],
@@ -49,20 +56,27 @@ final class EvaluationTemplateController
     public function update(array $params): void
     {
         $templateId = (int) $params['id'];
+
         try {
             $newMax = (float) ($_POST['max_score'] ?? 0);
             $names = is_array($_POST['criteria_name'] ?? null) ? $_POST['criteria_name'] : [];
             $scores = is_array($_POST['criteria_max'] ?? null) ? $_POST['criteria_max'] : [];
+
             $updates = [];
             foreach ($names as $criteriaId => $name) {
-                $updates[(int) $criteriaId] = ['name' => (string) $name, 'max_score' => (float) ($scores[$criteriaId] ?? 0)];
+                $updates[(int) $criteriaId] = [
+                    'name' => (string) $name,
+                    'max_score' => (float) ($scores[$criteriaId] ?? 0),
+                ];
             }
+
             $this->evaluations->updateTemplateCriteria($templateId, $newMax, $updates);
             header('Location: /admin/evaluation-templates');
         } catch (AuthException $e) {
             Session::flashError($e->getMessage());
             header('Location: /admin/evaluation-templates/' . $templateId);
         }
+
         exit;
     }
 }

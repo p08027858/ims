@@ -1,9 +1,6 @@
 <?php
 /**
- * Edit one evaluation template's criteria (Phase 8 item 5, RULE-EVAL-03). New page, not part of
- * the 27 Stitch exports. Wired to App\Controllers\EvaluationTemplateController — the sum of all
- * criteria max_score inputs below must equal the template max_score input, checked live in JS
- * for UX and re-checked authoritatively server-side (EvaluationService::validateCriteriaSum()).
+ * Edit one evaluation template's criteria (Phase 8 item 5, RULE-EVAL-03).
  */
 $notFound = $notFound ?? false;
 $templateId = $templateId ?? 0;
@@ -21,6 +18,7 @@ $formError = $formError ?? null;
   <?php else: ?>
     <div>
       <h1 class="font-headline-lg text-headline-lg text-on-surface dark:text-text-dark-mode"><?= htmlspecialchars($templateName) ?></h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">ผลรวมหัวข้อย่อยต้องเท่ากับคะแนนเต็มของแบบประเมินตาม RULE-EVAL-03</p>
     </div>
 
     <?php if ($formError): ?>
@@ -44,7 +42,7 @@ $formError = $formError ?? null;
         <label class="font-label-md text-label-md text-on-surface-variant" for="max_score">คะแนนเต็มของแบบประเมิน</label>
         <input type="number" id="max_score" name="max_score" value="<?= $maxScore ?>" step="0.5" min="0" class="w-24 h-touch-target px-3 text-center bg-surface-container dark:bg-surface-container-high/10 border border-outline-variant rounded-lg font-body-md text-on-surface dark:text-text-dark-mode focus:outline-none focus:border-primary"/>
       </div>
-      <p id="sum-mismatch-warning" class="hidden font-metadata text-metadata text-error">ผลรวมหัวข้อย่อยต้องเท่ากับคะแนนเต็มของแบบประเมิน (RULE-EVAL-03)</p>
+      <p id="sum-mismatch-warning" class="hidden font-metadata text-metadata text-error">ผลรวมหัวข้อย่อยต้องเท่ากับคะแนนเต็มของแบบประเมิน</p>
 
       <button type="submit" class="w-full h-touch-target bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-primary-container active:scale-[0.97] transition-all">
         <span class="material-symbols-outlined">save</span> บันทึก
@@ -55,11 +53,17 @@ $formError = $formError ?? null;
 <script>
   function recompute() {
     let sum = 0;
-    document.querySelectorAll('.criteria-score').forEach(i => sum += Number(i.value) || 0);
+    document.querySelectorAll('.criteria-score').forEach((input) => {
+      sum += Number(input.value) || 0;
+    });
     document.getElementById('criteria-sum').textContent = sum;
     const max = Number(document.getElementById('max_score').value) || 0;
     document.getElementById('sum-mismatch-warning').classList.toggle('hidden', Math.abs(sum - max) < 0.01);
   }
-  document.querySelectorAll('.criteria-score, #max_score').forEach(i => i.addEventListener('input', recompute));
+
+  document.querySelectorAll('.criteria-score, #max_score').forEach((input) => {
+    input.addEventListener('input', recompute);
+  });
+
   recompute();
 </script>
