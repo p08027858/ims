@@ -34,15 +34,16 @@ final class AuditLogger
         try {
             $this->client->restInsert('audit_logs', [
                 'user_id' => $userId,
-                'role' => $role,
                 'action' => $action,
-                'module' => $module,
-                'entity_type' => $entityType,
+                'entity_name' => $entityType,
                 'entity_id' => $entityId,
-                'old_value' => $oldValue !== null ? json_encode($oldValue, JSON_UNESCAPED_UNICODE) : null,
-                'new_value' => $newValue !== null ? json_encode($newValue, JSON_UNESCAPED_UNICODE) : null,
+                'details' => [
+                    'role' => $role,
+                    'module' => $module,
+                    'before' => $oldValue,
+                    'after' => $newValue,
+                ],
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0',
-                'user_agent' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500),
             ]);
         } catch (\Throwable) {
             // best-effort only

@@ -10,7 +10,10 @@ final class AuditLogController
     public function listData(array $params): array
     {
         $client = new SupabaseClient();
-        $rows = $client->restGet('audit_logs', 'select=*&order=created_at.desc&limit=100');
+        $rows = $client->restGet(
+            'audit_logs',
+            'select=id,user_id,action,entity_name,entity_id,details,ip_address,created_at&order=created_at.desc&limit=100'
+        );
 
         $userIds = array_values(array_unique(array_filter(array_column($rows, 'user_id'))));
         $usersById = [];
@@ -20,14 +23,17 @@ final class AuditLogController
         }
 
         return ['logs' => array_map(function (array $r) use ($usersById) {
-            $old = $r['old_value'] !== null ? json_decode((string) $r['old_value'], true) : null;
-            $new = $r['new_value'] !== null ? json_decode((string) $r['new_value'], true) : null;
+            $details = $r['details'] ?? null;
+            if (is_string($details)) {
+                $details = json_decode($details, true);
+            }
+            $details = is_array($details) ? $details : [];
             return [
-                'time' => date('d/m/y H:i', strtotime($r['created_at'])),
-                'user' => $usersById[$r['user_id']] ?? ($r['role'] ?? '-'),
-                'action' => $r['action'],
-                'entity' => $r['entity_type'] . ($r['entity_id'] !== null ? '#' . $r['entity_id'] : ''),
-                'diff' => $this->summarizeDiff($old, $new),
+                'time' => date('d/m/y H:i', strtotime((string) ($r['created_at'] ?? 'now'))),
+                'user' => $usersById[$r['user_id'] ?? ''] ?? ($details['role'] ?? '-'),
+                'action' => (string) ($r['action'] ?? '-'),
+                'entity' => (string) ($r['entity_name'] ?? '-') . (($r['entity_id'] ?? null) !== null ? '#' . $r['entity_id'] : ''),
+                'diff' => $this->summarizeDiff($details['before'] ?? null, $details['after'] ?? null),
             ];
         }, $rows)];
     }
