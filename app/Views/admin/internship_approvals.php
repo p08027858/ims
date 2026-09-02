@@ -37,10 +37,10 @@ $statusClass = ['pending_approval' => 'bg-status-warning/10 text-status-warning'
         <div class="bg-surface-container-lowest dark:bg-surface-dark rounded-xl p-5 shadow-soft border border-surface-variant dark:border-outline-variant/20 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <div class="flex items-center gap-2 mb-1">
-              <p class="font-label-md text-label-md text-on-surface dark:text-text-dark-mode"><?= htmlspecialchars($i['student_name']) ?></p>
+              <p class="font-label-md text-label-md text-on-surface dark:text-text-dark-mode"><?= htmlspecialchars((string) ($i['student_name'] ?? '')) ?></p>
               <span class="px-2 py-0.5 rounded-full font-metadata text-metadata <?= $statusClass[$i['status']] ?? 'bg-surface-variant text-on-surface-variant' ?>"><?= $statusLabel[$i['status']] ?? $i['status'] ?></span>
             </div>
-            <p class="font-metadata text-metadata text-on-surface-variant"><?= htmlspecialchars($i['company_name']) ?> · <?= htmlspecialchars($i['start_date']) ?> - <?= htmlspecialchars($i['end_date']) ?></p>
+            <p class="font-metadata text-metadata text-on-surface-variant"><?= htmlspecialchars((string) ($i['company_name'] ?? '')) ?> · <?= htmlspecialchars((string) ($i['start_date'] ?? '')) ?> - <?= htmlspecialchars((string) ($i['end_date'] ?? '')) ?></p>
           </div>
           <div class="flex items-center gap-2">
             <?php if ($i['status'] === 'pending_approval'): ?>
@@ -52,7 +52,7 @@ $statusClass = ['pending_approval' => 'bg-status-warning/10 text-status-warning'
               <button type="button" onclick="document.getElementById('terminate-modal-<?= $i['id'] ?>').classList.remove('hidden')" class="px-4 py-2 rounded-lg border border-error text-error hover:bg-error-container/20 font-label-md text-label-md transition-colors">ยุติการฝึกงาน</button>
               <div id="terminate-modal-<?= $i['id'] ?>" class="hidden fixed inset-0 z-50 bg-surface-dark/40 backdrop-blur-sm items-center justify-center p-4">
                 <div class="bg-surface-container-lowest dark:bg-surface-dark rounded-2xl p-6 max-w-sm w-full">
-                  <h3 class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode mb-3">ยุติการฝึกงานของ <?= htmlspecialchars($i['student_name']) ?>?</h3>
+                  <h3 class="font-headline-md text-headline-md text-on-surface dark:text-text-dark-mode mb-3">ยุติการฝึกงานของ <?= htmlspecialchars((string) ($i['student_name'] ?? '')) ?>?</h3>
                   <form method="post" action="/admin/internships/<?= $i['id'] ?>/terminate" class="flex flex-col gap-3">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(\App\Support\Session::csrfToken()) ?>"/>
                     <textarea name="termination_reason" rows="3" required placeholder="ระบุเหตุผล..." class="w-full px-4 py-3 bg-surface-container dark:bg-surface-container-high/10 border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface dark:text-text-dark-mode resize-none focus:outline-none focus:border-primary"></textarea>
